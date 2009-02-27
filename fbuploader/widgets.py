@@ -26,17 +26,20 @@ import logging
 
 log = logging.getLogger(__name__)
 
-class PhotoPreview(gtk.Image):
+class PhotoPreview(gtk.EventBox):
     __gtype_name__ = "PhotoPreview"
     
     def __init__(self):
         super(PhotoPreview, self).__init__()
+        self.image = gtk.Image()
+        self.add(self.image)
         self.pixbuf = None
         self.is_resize = False
-        self.connect("size-allocate", self.on_size_allocate)
+        self.image.connect("size-allocate", self.on_image_size_allocate)
+        self.connect("button-press-event", self.on_button_press_event)
     
     def _scale_image(self, allocation=None):
-        allocation = allocation or self.get_allocation()
+        allocation = allocation or self.image.get_allocation()
         log.debug("Resizing image (%dx%d)", allocation.width, allocation.height)
         width, height = self.pixbuf.get_width(), self.pixbuf.get_height()
         
@@ -60,20 +63,31 @@ class PhotoPreview(gtk.Image):
             log.debug("Height still bigger")
             ratio = height / float(allocation.height)
             width, height = int(width / ratio), allocation.height
+        self.width, self.height = width, height
         return self.pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
     
-    def on_size_allocate(self, *args):
+    def on_image_size_allocate(self, *args):
         if self.pixbuf is None: return
         if self.is_resize:
-            self.set_from_pixbuf(self._scale_image())
+            self.image.set_from_pixbuf(self._scale_image())
             self.is_resize = False
         else:
             self.is_resize = True
     
+    def on_button_press_event(self, widget, event):
+        allocation = self.image.get_allocation()
+        x, y = event.x, event.y
+        if allocation.width == self.width:
+            y -= int((allocation.height - self.height) / 2.0)
+        elif allocation.height == self.height:
+            x -= int((allocation.width - self.width) / 2.0)
+        x = (x / self.width) * 100
+        y = (y / self.height) * 100
+
     def set_from_file(self, filename):
         self.pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
         scaled_pixbuf = self._scale_image()
-        self.set_from_pixbuf(scaled_pixbuf)
+        self.image.set_from_pixbuf(scaled_pixbuf)
 
 class PhotoView(gtk.IconView):
     __gtype_name__ = "PhotoView"
