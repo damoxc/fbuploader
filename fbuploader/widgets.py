@@ -25,6 +25,11 @@ import gtk
 
 class PhotoPreview(gtk.Image):
     __gtype_name__ = "PhotoPreview"
+    
+    def set_from_file(self, filename):
+        super(PhotoPreview, self).set_from_file(filename)
+        self.original_pixbuf = self.get_pixbuf()
+        
 
 class PhotoView(gtk.IconView):
     __gtype_name__ = "PhotoView"
