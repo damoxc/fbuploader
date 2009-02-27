@@ -22,14 +22,53 @@
 
 import os
 import gtk
+import logging
+
+log = logging.getLogger(__name__)
 
 class PhotoPreview(gtk.Image):
     __gtype_name__ = "PhotoPreview"
     
-    def set_from_file(self, filename):
-        super(PhotoPreview, self).set_from_file(filename)
-        self.original_pixbuf = self.get_pixbuf()
+    def __init__(self):
+        super(PhotoPreview, self).__init__()
+        self.pixbuf = None
+        self.is_resize = False
+        self.connect("size-allocate", self.on_size_allocate)
+    
+    def _scale_image(self, allocation=None):
+        log.debug("Resizing image")
+        allocation = allocation or self.get_allocation()
+        width, height = self.pixbuf.get_width(), self.pixbuf.get_height()
         
+        # First stage to resize the picture by the largest dimension
+        if width > height:
+            ratio = width / float(allocation.width)
+            width, height = allocation.width, int(height / ratio)
+        else:
+            ratio = height / allocation.height
+            width, height = int(width / ratio), allocation.height
+        
+        # Check to ensure that the smaller dimension isn't exceeding the 
+        # widgets allocated space.
+        if width > allocation.width:
+            ratio = width / float(allocation.width)
+            width, height = allocation.width, int(height / ratio)
+        elif height > allocation.height:
+            ratio = height / float(allocation.height)
+            width, height = int(width / ratio), allocation.height
+        return self.pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
+    
+    def on_size_allocate(self, *args):
+        if self.is_resize:
+            self.set_from_pixbuf(self._scale_image())
+            self.is_resize = False
+        else:
+            self.is_resize = True
+    
+    def set_from_file(self, filename):
+        self.pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
+        scaled_pixbuf = self._scale_image()
+        self.set_from_pixbuf(scaled_pixbuf)
 
 class PhotoView(gtk.IconView):
     __gtype_name__ = "PhotoView"

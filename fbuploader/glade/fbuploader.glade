@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.5 on Fri Feb 27 15:19:43 2009 -->
+<?xml version="1.0"?>
 <glade-interface>
+  <!-- interface-requires gtk+ 2.16 -->
+  <!-- interface-naming-policy toplevel-contextual -->
   <widget class="GtkWindow" id="main_window">
     <property name="title" translatable="yes">Facebook PhotoUploader</property>
     <property name="default_width">600</property>
@@ -26,28 +26,16 @@
                     <property name="visible">True</property>
                     <child>
                       <widget class="GtkImageMenuItem" id="newalbum_menuitem">
+                        <property name="label">New Album</property>
                         <property name="visible">True</property>
-                        <property name="label" translatable="yes">New Album</property>
-                        <child internal-child="image">
-                          <widget class="GtkImage" id="menu-item-image6">
-                            <property name="visible">True</property>
-                            <property name="stock">gtk-new</property>
-                            <property name="icon_size">1</property>
-                          </widget>
-                        </child>
+                        <property name="use_underline">True</property>
                       </widget>
                     </child>
                     <child>
                       <widget class="GtkImageMenuItem" id="refreshalbums_menuitem">
+                        <property name="label">Refresh Albums</property>
                         <property name="visible">True</property>
-                        <property name="label" translatable="yes">Refresh Albums</property>
-                        <child internal-child="image">
-                          <widget class="GtkImage" id="menu-item-image7">
-                            <property name="visible">True</property>
-                            <property name="stock">gtk-refresh</property>
-                            <property name="icon_size">1</property>
-                          </widget>
-                        </child>
+                        <property name="use_underline">True</property>
                       </widget>
                     </child>
                     <child>
@@ -57,16 +45,10 @@
                     </child>
                     <child>
                       <widget class="GtkImageMenuItem" id="quit_menuitem">
-                        <property name="visible">True</property>
                         <property name="label">Quit</property>
+                        <property name="visible">True</property>
+                        <property name="use_underline">True</property>
                         <signal name="activate" handler="on_quit_menuitem_activate"/>
-                        <child internal-child="image">
-                          <widget class="GtkImage" id="menu-item-image8">
-                            <property name="visible">True</property>
-                            <property name="stock">gtk-quit</property>
-                            <property name="icon_size">1</property>
-                          </widget>
-                        </child>
                       </widget>
                     </child>
                   </widget>
@@ -83,15 +65,9 @@
                     <property name="visible">True</property>
                     <child>
                       <widget class="GtkImageMenuItem" id="preferences_menuitem">
-                        <property name="visible">True</property>
                         <property name="label">Preferences</property>
-                        <child internal-child="image">
-                          <widget class="GtkImage" id="menu-item-image9">
-                            <property name="visible">True</property>
-                            <property name="stock">gtk-preferences</property>
-                            <property name="icon_size">1</property>
-                          </widget>
-                        </child>
+                        <property name="visible">True</property>
+                        <property name="use_underline">True</property>
                       </widget>
                     </child>
                   </widget>
@@ -108,15 +84,9 @@
                     <property name="visible">True</property>
                     <child>
                       <widget class="GtkImageMenuItem" id="about_menuitem">
-                        <property name="visible">True</property>
                         <property name="label">About</property>
-                        <child internal-child="image">
-                          <widget class="GtkImage" id="menu-item-image10">
-                            <property name="visible">True</property>
-                            <property name="stock">gtk-about</property>
-                            <property name="icon_size">1</property>
-                          </widget>
-                        </child>
+                        <property name="visible">True</property>
+                        <property name="use_underline">True</property>
                       </widget>
                     </child>
                   </widget>
@@ -126,6 +96,7 @@
           </widget>
           <packing>
             <property name="expand">False</property>
+            <property name="position">0</property>
           </packing>
         </child>
         <child>
@@ -171,16 +142,14 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="padding">8</property>
+                    <property name="position">0</property>
                   </packing>
-                </child>
-                <child>
-                  <placeholder/>
                 </child>
                 <child>
                   <widget class="GtkFrame" id="photos_frame">
                     <property name="visible">True</property>
                     <property name="label_xalign">0</property>
-                    <property name="shadow_type">GTK_SHADOW_IN</property>
+                    <property name="shadow_type">in</property>
                     <child>
                       <widget class="GtkAlignment" id="photos_alignment">
                         <property name="visible">True</property>
@@ -192,8 +161,8 @@
                           <widget class="GtkScrolledWindow" id="photos_scrolled">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
-                            <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                            <property name="hscrollbar_policy">automatic</property>
+                            <property name="vscrollbar_policy">automatic</property>
                             <child>
                               <placeholder/>
                             </child>
@@ -214,7 +183,7 @@
                   </widget>
                   <packing>
                     <property name="padding">5</property>
-                    <property name="position">2</property>
+                    <property name="position">1</property>
                   </packing>
                 </child>
               </widget>
@@ -285,7 +254,7 @@
                                 </child>
                                 <child>
                                   <widget class="GtkLabel" id="albumlocation_label">
-                                    <property name="width_request">65</property>
+                                    <property name="width_request">75</property>
                                     <property name="visible">True</property>
                                     <property name="xalign">0</property>
                                     <property name="label" translatable="yes">Location</property>
@@ -298,7 +267,7 @@
                                 </child>
                                 <child>
                                   <widget class="GtkLabel" id="albumdescription_label">
-                                    <property name="width_request">65</property>
+                                    <property name="width_request">75</property>
                                     <property name="visible">True</property>
                                     <property name="xalign">0</property>
                                     <property name="label" translatable="yes">Description</property>
@@ -311,7 +280,7 @@
                                 </child>
                                 <child>
                                   <widget class="GtkLabel" id="albumname_label">
-                                    <property name="width_request">65</property>
+                                    <property name="width_request">75</property>
                                     <property name="visible">True</property>
                                     <property name="xalign">0</property>
                                     <property name="label" translatable="yes">Name</property>
@@ -321,14 +290,17 @@
                                   </packing>
                                 </child>
                               </widget>
+                              <packing>
+                                <property name="position">0</property>
+                              </packing>
                             </child>
                             <child>
                               <widget class="GtkViewport" id="albumcover_viewport">
                                 <property name="width_request">120</property>
                                 <property name="height_request">85</property>
                                 <property name="visible">True</property>
-                                <property name="resize_mode">GTK_RESIZE_QUEUE</property>
-                                <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
+                                <property name="resize_mode">queue</property>
+                                <property name="shadow_type">etched-in</property>
                                 <child>
                                   <widget class="GtkImage" id="albumcover_image">
                                     <property name="visible">True</property>
@@ -362,13 +334,14 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="padding">8</property>
+                    <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
                   <widget class="GtkViewport" id="preview_viewport">
                     <property name="visible">True</property>
-                    <property name="resize_mode">GTK_RESIZE_QUEUE</property>
-                    <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
+                    <property name="resize_mode">queue</property>
+                    <property name="shadow_type">etched-in</property>
                     <child>
                       <placeholder/>
                     </child>
@@ -392,6 +365,7 @@
                       </widget>
                       <packing>
                         <property name="expand">False</property>
+                        <property name="position">0</property>
                       </packing>
                     </child>
                     <child>
@@ -430,23 +404,24 @@
                     <child>
                       <widget class="GtkHButtonBox" id="bottom_buttons">
                         <property name="visible">True</property>
-                        <property name="layout_style">GTK_BUTTONBOX_SPREAD</property>
+                        <property name="layout_style">spread</property>
                         <child>
                           <widget class="GtkButton" id="upload_button">
+                            <property name="label" translatable="yes">Upload to Facebook</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="label" translatable="yes">Upload to Facebook</property>
-                            <property name="response_id">0</property>
                           </widget>
+                          <packing>
+                            <property name="position">0</property>
+                          </packing>
                         </child>
                         <child>
                           <widget class="GtkButton" id="photochoose_button">
+                            <property name="label" translatable="yes">Pick Photos...</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="label" translatable="yes">Pick Photos...</property>
-                            <property name="response_id">0</property>
                             <signal name="clicked" handler="on_photochoose_button_clicked"/>
                           </widget>
                           <packing>
@@ -463,7 +438,7 @@
                   </widget>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="pack_type">GTK_PACK_END</property>
+                    <property name="pack_type">end</property>
                     <property name="position">2</property>
                   </packing>
                 </child>
@@ -475,6 +450,7 @@
             </child>
           </widget>
           <packing>
+            <property name="pack_type">end</property>
             <property name="position">1</property>
           </packing>
         </child>
@@ -484,9 +460,9 @@
   <widget class="GtkFileChooserDialog" id="photochooser_dialog">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Choose photos</property>
-    <property name="window_position">GTK_WIN_POS_CENTER_ON_PARENT</property>
+    <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
-    <property name="type_hint">GDK_WINDOW_TYPE_HINT_DIALOG</property>
+    <property name="type_hint">dialog</property>
     <property name="has_separator">False</property>
     <signal name="file_activated" handler="on_photochooser_dialog_file_activated"/>
     <signal name="delete_event" handler="on_photochooser_dialog_delete_event"/>
@@ -497,26 +473,27 @@
         <child internal-child="action_area">
           <widget class="GtkHButtonBox" id="photochooser_action_area">
             <property name="visible">True</property>
-            <property name="layout_style">GTK_BUTTONBOX_END</property>
+            <property name="layout_style">end</property>
             <child>
               <widget class="GtkButton" id="photochooser_cancel_button">
+                <property name="label" translatable="yes">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="label" translatable="yes">gtk-cancel</property>
                 <property name="use_stock">True</property>
-                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_photochooser_cancel_button_clicked"/>
               </widget>
+              <packing>
+                <property name="position">0</property>
+              </packing>
             </child>
             <child>
               <widget class="GtkButton" id="photochooser_open_button">
+                <property name="label" translatable="yes">gtk-open</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="label" translatable="yes">gtk-open</property>
                 <property name="use_stock">True</property>
-                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_photochooser_open_button_clicked"/>
               </widget>
               <packing>
@@ -526,7 +503,8 @@
           </widget>
           <packing>
             <property name="expand">False</property>
-            <property name="pack_type">GTK_PACK_END</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
           </packing>
         </child>
       </widget>

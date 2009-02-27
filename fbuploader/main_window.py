@@ -172,8 +172,6 @@ class MainWindow(Window):
     
     @signal
     def on_main_window_show(self, e):
-        self.set_form_sensitive(True)
-        return
         logged_in = gtk.MessageDialog(buttons=gtk.BUTTONS_OK)
         logged_in.set_markup("Press OK once you have logged in.")
         self.fb_token = self.facebook.auth.createToken()
@@ -231,7 +229,11 @@ class MainWindow(Window):
     
     @signal
     def on_photos_view_selection_changed(self, *args):
-        selected = self.photos_view.get_selected_items()[0]
+        selected = self.photos_view.get_selected_items()
+        if not selected:
+            return
+
+        selected = selected[0]
         model = self.photos_view.get_model()
         filename = model[selected][0]
         assert isinstance(self.preview_image, gtk.Image)
