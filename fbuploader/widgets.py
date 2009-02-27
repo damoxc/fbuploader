@@ -36,29 +36,34 @@ class PhotoPreview(gtk.Image):
         self.connect("size-allocate", self.on_size_allocate)
     
     def _scale_image(self, allocation=None):
-        log.debug("Resizing image")
         allocation = allocation or self.get_allocation()
+        log.debug("Resizing image (%dx%d)", allocation.width, allocation.height)
         width, height = self.pixbuf.get_width(), self.pixbuf.get_height()
         
         # First stage to resize the picture by the largest dimension
         if width > height:
+            log.debug("Image width is bigger")
             ratio = width / float(allocation.width)
             width, height = allocation.width, int(height / ratio)
         else:
-            ratio = height / allocation.height
+            log.debug("Image height is bigger")
+            ratio = height / float(allocation.height)
             width, height = int(width / ratio), allocation.height
         
         # Check to ensure that the smaller dimension isn't exceeding the 
         # widgets allocated space.
         if width > allocation.width:
+            log.debug("Width still bigger")
             ratio = width / float(allocation.width)
             width, height = allocation.width, int(height / ratio)
         elif height > allocation.height:
+            log.debug("Height still bigger")
             ratio = height / float(allocation.height)
             width, height = int(width / ratio), allocation.height
         return self.pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
     
     def on_size_allocate(self, *args):
+        if self.pixbuf is None: return
         if self.is_resize:
             self.set_from_pixbuf(self._scale_image())
             self.is_resize = False
