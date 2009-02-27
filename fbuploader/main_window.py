@@ -233,10 +233,18 @@ class MainWindow(Window):
         if not selected:
             return
 
+        # If there was a previous image, save the value in the caption field
+        if self.preview_image.filename is not None:
+            info = self.photo_info.get(self.preview_image.filename, {})
+            info["caption"] = self.caption_entry.get_text()
+            self.photo_info[self.preview_image.filename] = info
+        
         selected = selected[0]
         model = self.photos_view.get_model()
         filename = model[selected][0]
-        assert isinstance(self.preview_image, gtk.Image)
-        self.preview_image
+        
+        info = self.photo_info.get(filename, {})
+        
         self.preview_image.set_from_file(filename)
+        self.caption_entry.set_text(info.get("caption", ""))
         return True

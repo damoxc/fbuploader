@@ -35,6 +35,7 @@ class PhotoPreview(gtk.EventBox):
         self.add(self.image)
         self.pixbuf = None
         self.is_resize = False
+        self.filename = None
         self.image.connect("size-allocate", self.on_image_size_allocate)
         self.connect("button-press-event", self.on_button_press_event)
     
@@ -85,6 +86,7 @@ class PhotoPreview(gtk.EventBox):
         y = (y / self.height) * 100
 
     def set_from_file(self, filename):
+        self.filename = filename
         self.pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
         scaled_pixbuf = self._scale_image()
         self.image.set_from_pixbuf(scaled_pixbuf)
