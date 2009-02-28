@@ -27,7 +27,7 @@ from fbuploader.common import Dialog, Events, signal
 
 class FriendsDialog(Dialog, Events):
     
-    def __init__(self, friends):
+    def __init__(self, user_uid, friends):
         glade_file = resource_filename("fbuploader", "glade/fbuploader.glade")
         Events.__init__(self)
         super(FriendsDialog, self).__init__(glade_file, "friends_dialog")
@@ -35,6 +35,7 @@ class FriendsDialog(Dialog, Events):
         # Set up the list of friends names and uids
         friends.sort(lambda x, y: cmp(x["name"], y["name"]))
         self.friends = friends
+        self.user_uid = user_uid
         self.__recent_friends = {}
 
         # Get the required widgets as variables
@@ -52,6 +53,7 @@ class FriendsDialog(Dialog, Events):
             treeview.append_column(column)
             treeview.set_headers_visible(False)
         self.filter_friends()
+        
     
     def filter_friends(self, filter_text=""):
         # Add all the friends to the all friends treeview.
@@ -59,6 +61,8 @@ class FriendsDialog(Dialog, Events):
         model.clear()
         count = 0
         for friend in self.friends:
+            if friend["uid"] == self.user_uid:
+                self.add_recent_friend(friend["name"], friend["uid"])
             if friend["name"].startswith(filter_text):
                 model.append((friend["uid"], friend["name"]))
                 count += 1
