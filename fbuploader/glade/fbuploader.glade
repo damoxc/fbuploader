@@ -532,6 +532,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <signal name="changed" handler="on_friend_entry_changed"/>
+            <signal name="activate" handler="on_friend_entry_activate"/>
           </widget>
           <packing>
             <property name="expand">False</property>
@@ -552,6 +553,7 @@
                   <widget class="GtkTreeView" id="allfriends_treeview">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <signal name="row_activated" handler="on_allfriends_treeview_row_activated"/>
                   </widget>
                 </child>
               </widget>
@@ -579,7 +581,10 @@
             <child>
               <widget class="GtkAlignment" id="recentfriends_alignment">
                 <property name="visible">True</property>
-                <property name="left_padding">12</property>
+                <property name="top_padding">5</property>
+                <property name="bottom_padding">5</property>
+                <property name="left_padding">5</property>
+                <property name="right_padding">5</property>
                 <child>
                   <widget class="GtkScrolledWindow" id="recentfriends_scrolledwindow">
                     <property name="visible">True</property>
@@ -590,6 +595,7 @@
                       <widget class="GtkTreeView" id="recentfriends_treeview">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <signal name="row_activated" handler="on_recentfriends_treeview_row_activated"/>
                       </widget>
                     </child>
                   </widget>

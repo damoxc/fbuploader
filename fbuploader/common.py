@@ -48,7 +48,7 @@ def property(fget=None, fset=None, fdel=None, doc=None):
 
 class Events(object):
     
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.__events = {}
         log.debug("Initializing Events class")
     

@@ -279,3 +279,4 @@ class MainWindow(Window):
         self.friends_chooser.dialog.set_position(gtk.WIN_POS_MOUSE)
         if self.friends_chooser.run() != gtk.RESPONSE_OK:
             return True
+        print self.friends_chooser.uid, self.friends_chooser.name

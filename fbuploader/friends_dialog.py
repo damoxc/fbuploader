@@ -35,6 +35,7 @@ class FriendsDialog(Dialog, Events):
         # Set up the list of friends names and uids
         friends.sort(lambda x, y: cmp(x["name"], y["name"]))
         self.friends = friends
+        self.__recent_friends = {}
 
         # Get the required widgets as variables
         self.friend_entry = self.tree.get_widget("friend_entry")
@@ -63,10 +64,28 @@ class FriendsDialog(Dialog, Events):
                 count += 1
         return count
     
+    def add_recent_friend(self, name, uid=-1):
+        if name not in self.__recent_friends:
+            self.__recent_friends[name] = uid
+            model = self.recent_friends.get_model()
+            model.append((uid, name))
+    
     def run(self):
+        self.uid, self.name = None, None
         self.dialog.set_position(gtk.WIN_POS_MOUSE)
         self.friend_entry.grab_focus()
-        return self.dialog.run()
+        response = self.dialog.run()
+        
+        # Begin tidy up so dialog will be fresh for the next run
+        self.friend_entry.set_text("")
+        self.filter_friends()
+        if self.all_friends_expander.get_expanded():
+            self.all_friends_expander.set_expanded(False)
+        
+        # Finally hide the dialog, we want to do this every run regardless of
+        # response.
+        self.dialog.hide()
+        return response
     
     @signal
     def on_friends_ok_button_clicked(self, *args):
@@ -74,7 +93,6 @@ class FriendsDialog(Dialog, Events):
     
     @signal
     def on_friends_cancel_button_clicked(self, *args):
-        self.dialog.hide()
         self.dialog.response(gtk.RESPONSE_CANCEL)
         return True
     on_friends_dialog_delete_event = on_friends_cancel_button_clicked 
@@ -88,3 +106,12 @@ class FriendsDialog(Dialog, Events):
             selection = self.all_friends.get_selection()
             selection.select_path((0,))
             self.all_friends.grab_focus()
+    
+    @signal
+    def on_allfriends_treeview_row_activated(self, allfriends, path, column):
+        model = allfriends.get_model()
+        self.uid, self.name = model.get(model.get_iter(path), 0, 1)
+        self.add_recent_friend(self.name, self.uid)
+        self.dialog.response(gtk.RESPONSE_OK)
+    on_recentfriends_treeview_row_activated = on_allfriends_treeview_row_activated
+        
