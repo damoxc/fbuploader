@@ -30,6 +30,7 @@ import gtk.glade
 import threading
 from pkg_resources import resource_filename
 from fbuploader.common import Window, signal
+from fbuploader.friends_dialog import FriendsDialog
 from fbuploader.photochooser_dialog import PhotoChooser
 from fbuploader.widgets import PhotoView, PhotoPreview
 
@@ -47,6 +48,17 @@ class AlbumDownloader(threading.Thread):
     def run(self):
         log.info("Downloading photo albums")
         self.callback(self.facebook.photos.getAlbums())
+
+class FriendsDownloader(threading.Thread):
+    def __init__(self, facebook, callback):
+        super(FriendsDownloader, self).__init__()
+        self.facebook = facebook
+        self.callback = callback
+    
+    def run(self):
+        log.info("Downloading friend information")
+        friends = self.facebook.users.getInfo(self.facebook.friends.get())
+        self.callback(friends)
 
 class AlbumCoverDownloader(threading.Thread):
     def __init__(self, facebook, album, callback):
@@ -115,6 +127,7 @@ class MainWindow(Window):
         # Add in the preview photo image widget
         self.preview_image = PhotoPreview()
         self.tree.get_widget("preview_viewport").add(self.preview_image)
+        self.preview_image.on("tag-event", self.on_photo_tag)
         
         # Initialize the photo_chooser variable that will contain the
         # filechooser dialog.
@@ -123,6 +136,10 @@ class MainWindow(Window):
         # Initialize the photo_info dictionary used to store the captions
         # and tags for the photos.
         self.photo_info = {}
+        
+        # Initialize the friends_chooser variable that will contain the
+        # friends chooser dialog.
+        self.friends_chooser = None
     
     def set_form_sensitive(self, sensitive=True):
         action = sensitive and "Enabling" or "Disabling"
@@ -144,6 +161,8 @@ class MainWindow(Window):
         log.info("Shutting down main window")
         if self.photo_chooser is not None:
             self.photo_chooser.dialog.hide()
+        if self.friends_chooser is not None:
+            self.friends_chooser.dialog.hide()
         try:
             gtk.main_quit()
         except RuntimeError: pass
@@ -167,6 +186,9 @@ class MainWindow(Window):
                                                                  album["size"]))
         self.set_form_sensitive(True)
     
+    def on_got_friends(self, friends):
+        self.friends = friends
+    
     def on_got_albumcover(self, path):
         self.album_cover.set_from_file(path)
     
@@ -186,6 +208,7 @@ class MainWindow(Window):
             else:
                 log.info("Successfully logged in")
                 AlbumDownloader(self.facebook, self.on_got_albums).start()
+                FriendsDownloader(self.facebook, self.on_got_friends).start()
         else:
             log.error("Login failed")
     
@@ -243,8 +266,16 @@ class MainWindow(Window):
         model = self.photos_view.get_model()
         filename = model[selected][0]
         
-        info = self.photo_info.get(filename, {})
-        
+        info = self.photo_info.get(filename, {})        
         self.preview_image.set_from_file(filename)
         self.caption_entry.set_text(info.get("caption", ""))
         return True
+    
+    @signal
+    def on_photo_tag(self, x, y, event):
+        x, y = int(round(x)), int(round(y))
+        if self.friends_chooser is None:
+            self.friends_chooser = FriendsDialog(self.friends)
+        self.friends_chooser.dialog.set_position(gtk.WIN_POS_MOUSE)
+        if self.friends_chooser.run() != gtk.RESPONSE_OK:
+            return True

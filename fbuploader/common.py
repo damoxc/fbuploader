@@ -20,7 +20,10 @@
 # 	Boston, MA    02110-1301, USA.
 #
 
+import logging
 import gtk.glade
+
+log = logging.getLogger(__name__)
 
 def signal(func):
     func._signal = True
@@ -42,6 +45,27 @@ def property(fget=None, fset=None, fdel=None, doc=None):
         return _prop(**func_locals)
     else:
         return _prop(fget, fset, fdel, doc)
+
+class Events(object):
+    
+    def __init__(self):
+        self.__events = {}
+        log.debug("Initializing Events class")
+    
+    def on(self, event, callback):
+        callbacks = self.__events.get(event, [])
+        callbacks.append(callback)
+        self.__events[event] = callbacks
+    
+    def fire(self, event, *args):
+        callbacks = self.__events.get(event, [])
+        for callback in callbacks:
+            callback(*args)
+    
+    def unregister(self, event, callback):
+        callbacks = self.__events.get(event, [])
+        callbacks.remove(callback)
+        self.__events[event] = callbacks
 
 class Window(object):
 

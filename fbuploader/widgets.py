@@ -23,59 +23,63 @@
 import os
 import gtk
 import logging
+from fbuploader.common import Events
 
 log = logging.getLogger(__name__)
 
-class PhotoPreview(gtk.EventBox):
+class PhotoPreview(Events, gtk.EventBox):
     __gtype_name__ = "PhotoPreview"
     
     def __init__(self):
         super(PhotoPreview, self).__init__()
+        gtk.EventBox.__init__(self)
         self.image = gtk.Image()
         self.add(self.image)
         self.pixbuf = None
         self.is_resize = False
         self.filename = None
-        self.image.connect("size-allocate", self.on_image_size_allocate)
+        self.connect("size-allocate", self.on_image_size_allocate)
         self.connect("button-press-event", self.on_button_press_event)
     
     def _scale_image(self, allocation=None):
         allocation = allocation or self.image.get_allocation()
-        log.debug("Resizing image (%dx%d)", allocation.width, allocation.height)
+        log.debug("Resizing image")
+        log.debug("Allocated size (%dx%d)", allocation.width, allocation.height)
         width, height = self.pixbuf.get_width(), self.pixbuf.get_height()
+        log.debug("Image size (%dx%d)", width, height)
         
         # First stage to resize the picture by the largest dimension
         if width > height:
-            log.debug("Image width is bigger")
             ratio = width / float(allocation.width)
             width, height = allocation.width, int(height / ratio)
         else:
-            log.debug("Image height is bigger")
             ratio = height / float(allocation.height)
             width, height = int(width / ratio), allocation.height
         
+        log.debug("Scaled size run 1 (%dx%d)", width, height)
         # Check to ensure that the smaller dimension isn't exceeding the 
         # widgets allocated space.
         if width > allocation.width:
-            log.debug("Width still bigger")
             ratio = width / float(allocation.width)
             width, height = allocation.width, int(height / ratio)
         elif height > allocation.height:
-            log.debug("Height still bigger")
             ratio = height / float(allocation.height)
             width, height = int(width / ratio), allocation.height
+        log.debug("Scaled size run 2 (%dx%d)", width, height)
         self.width, self.height = width, height
         return self.pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
     
     def on_image_size_allocate(self, *args):
-        if self.pixbuf is None: return
+        allocation = self.get_allocation()
+        """if self.pixbuf is None: return
         if self.is_resize:
             self.image.set_from_pixbuf(self._scale_image())
             self.is_resize = False
         else:
-            self.is_resize = True
+            self.is_resize = True"""
     
     def on_button_press_event(self, widget, event):
+        if not hasattr(self, "width"): return
         allocation = self.image.get_allocation()
         x, y = event.x, event.y
         if allocation.width == self.width:
@@ -84,12 +88,14 @@ class PhotoPreview(gtk.EventBox):
             x -= int((allocation.width - self.width) / 2.0)
         x = (x / self.width) * 100
         y = (y / self.height) * 100
+        self.fire("tag-event", x, y, event)
 
     def set_from_file(self, filename):
         self.filename = filename
         self.pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
         scaled_pixbuf = self._scale_image()
         self.image.set_from_pixbuf(scaled_pixbuf)
+        self.get_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.CROSSHAIR))
 
 class PhotoView(gtk.IconView):
     __gtype_name__ = "PhotoView"
@@ -117,3 +123,4 @@ class PhotoView(gtk.IconView):
         del pixbuf
         name = os.path.basename(filename)
         self.get_model().append((filename, name, scaled))
+        self.queue_resize()
