@@ -179,6 +179,9 @@ class MainWindow(Window):
             if album["name"] == name:
                 return album
     
+    def set_tags(self, tags):
+        self.tags_entry.set_text("; ".join([tag[1] for tag in tags]))
+    
     def on_got_albums(self, albums):
         self.clear_photo_albums()
         for album in albums:
@@ -270,6 +273,7 @@ class MainWindow(Window):
         info = self.photo_info.get(filename, {})        
         self.preview_image.set_from_file(filename)
         self.caption_entry.set_text(info.get("caption", ""))
+        self.set_tags(info.get("tags", []))
         return True
     
     @signal
@@ -287,4 +291,5 @@ class MainWindow(Window):
         tags = info.get("tags", [])
         tags.append((uid, name, x, y))
         info["tags"] = tags
+        self.set_tags(tags)
         self.photo_info[self.preview_image.filename] = info

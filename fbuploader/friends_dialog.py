@@ -52,6 +52,9 @@ class FriendsDialog(Dialog, Events):
             column.add_attribute(renderer, "text", 1)
             treeview.append_column(column)
             treeview.set_headers_visible(False)
+            selection = treeview.get_selection()
+            selection.set_mode(gtk.SELECTION_SINGLE)
+            selection.connect("changed", self.on_selection_changed)
         self.filter_friends()
         
     
@@ -93,7 +96,27 @@ class FriendsDialog(Dialog, Events):
     
     @signal
     def on_friends_ok_button_clicked(self, *args):
-        pass
+        selection = self.recent_friends.get_selection()
+        if selection.count_selected_rows() > 0:
+            model, tree_iter = selection.get_selected()
+            self.uid, self.name = model.get(tree_iter, 0, 1)
+            self.add_recent_friend(self.name, self.uid)
+            self.dialog.response(gtk.RESPONSE_OK)
+        else:
+            model = self.all_friends.get_model()
+            if len(model) == 0:
+                self.uid = -1
+                self.name = self.friend_entry.get_text()
+                self.add_recent_friend(self.name, self.uid)
+                self.dialog.response(gtk.RESPONSE_OK)
+            else:
+                selection = self.all_friends.get_selection()
+                if selection.count_selected_rows() == 0:
+                    return True
+                model, tree_iter = selection.get_selected()
+                self.uid, self.name = model.get(tree_iter, 0, 1)
+                self.add_recent_friend(self.name, self.uid)
+                self.dialog.response(gtk.RESPONSE_OK)
     
     @signal
     def on_friends_cancel_button_clicked(self, *args):
@@ -118,4 +141,11 @@ class FriendsDialog(Dialog, Events):
         self.add_recent_friend(self.name, self.uid)
         self.dialog.response(gtk.RESPONSE_OK)
     on_recentfriends_treeview_row_activated = on_allfriends_treeview_row_activated
-        
+    
+    def on_selection_changed(self, selection):
+        treeview = selection.get_tree_view()
+        if treeview == self.all_friends:
+            other_selection = self.recent_friends.get_selection()
+        elif treeview == self.recent_friends:
+            other_selection = self.all_friends.get_selection()
+        other_selection.unselect_all()
