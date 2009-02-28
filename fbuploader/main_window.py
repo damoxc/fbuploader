@@ -279,4 +279,10 @@ class MainWindow(Window):
         self.friends_chooser.dialog.set_position(gtk.WIN_POS_MOUSE)
         if self.friends_chooser.run() != gtk.RESPONSE_OK:
             return True
-        print self.friends_chooser.uid, self.friends_chooser.name
+        uid, name = self.friends_chooser.uid, self.friends_chooser.name
+        
+        info = self.photo_info.get(self.preview_image.filename, {})
+        tags = info.get("tags", [])        
+        tags.append((uid, name, x, y))
+        info["tags"] = tags
+        self.photo_info[self.preview_image.filename] = info
