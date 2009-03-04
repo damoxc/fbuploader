@@ -29,4 +29,4 @@ log = logging.getLogger(__name__)
 class UploadDialog(Dialog):
     
     def __init__(self):
-        super(PhotoChooser, self).__init__("photochooser_dialog")
+        super(PhotoChooser, self).__init__("upload_dialog")
