@@ -23,7 +23,7 @@
 from setuptools import setup, find_packages
 
 setup(name="FBUploader",
-      version="0.0.1",
+      version="0.1",
       license="GPLv3",
       description="Facebook photo uploader",
       long_description="""""",
