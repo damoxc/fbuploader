@@ -101,7 +101,7 @@ class AlbumCoverDownloader(threading.Thread):
         if cover_photo:
             cover_photo = cover_photo[0]
         else:
-            log.warning("Album has no cover photo")
+            log.info("Album has no cover photo")
             return
 
         data_dir = os.path.join(tempfile.gettempdir(), "fbuploader")
@@ -115,6 +115,21 @@ class AlbumCoverDownloader(threading.Thread):
             
         self.album["cover_file"] = path
         self.callback(path)
+
+class PhotoAdder(Thread):
+    def __init__(self, photos_view):
+        super(PhotoAdder, self).__init__()
+        self.photos_view = photos_view
+        self.photos = []
+    
+    def add(self, photo):
+        self.photos.append(photo)
+    
+    def run(self):
+        for photo in self.photos:
+            filename, width, height = self.photos_view.add_photo(photo)
+            self.fire("photo-added", filename, width, height)
+
 
 class MainWindow(Window):
 
@@ -215,9 +230,6 @@ class MainWindow(Window):
             self.facebook.session_key = self.fb_session["session_key"]
             self.facebook.secret = FB_SECRET_KEY
             self.facebook.uid = self.fb_session["uid"]
-
-        AlbumDownloader(self.facebook, self.on_got_albums).start()
-        FriendsDownloader(self.facebook, self.on_got_friends).start()
         
         for photo in self.photos:
             info = self.photo_info[photo]
@@ -319,6 +331,8 @@ class MainWindow(Window):
         else:
             create_new_session()
             self.login()
+        AlbumDownloader(self.facebook, self.on_got_albums).start()
+        FriendsDownloader(self.facebook, self.on_got_friends).start()
         Autosave(self.on_autosave).start()
     
     @signal
@@ -342,7 +356,6 @@ class MainWindow(Window):
     @signal
     def on_photos_iconview_drag_data_received(self, iconview, context, x, y,
                                               selection, info, time):
-        print selection.data
         return True
 
     @signal
@@ -356,13 +369,18 @@ class MainWindow(Window):
         if self.photo_chooser.run() != gtk.RESPONSE_OK:
             return True
 
-        for filename in self.photo_chooser.dialog.get_filenames():
-            filename, width, height = self.photos_view.add_photo(filename)
+        def on_photo_added(filename, width, height):
             self.photos.append(filename)
             self.photo_info[filename] = {
                 "width": width,
                 "height": height
             }
+
+        adder = PhotoAdder(self.photos_view)
+        adder.on("photo-added", on_photo_added)
+        for filename in self.photo_chooser.dialog.get_filenames():
+            adder.add(filename)
+        adder.start()
     
     @signal
     def on_photos_view_selection_changed(self, *args):

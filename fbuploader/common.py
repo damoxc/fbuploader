@@ -23,6 +23,7 @@
 import os
 import time
 import logging
+import threading
 import gtk, gtk.glade
 import xdg, xdg.BaseDirectory
 from pkg_resources import resource_filename
@@ -89,7 +90,7 @@ class Events(object):
     
     def __init__(self, *args, **kwargs):
         self.__events = {}
-        log.debug("Initializing Events class")
+        log.info("Initializing Events class")
     
     def on(self, event, callback):
         callbacks = self.__events.get(event, [])
@@ -105,6 +106,11 @@ class Events(object):
         callbacks = self.__events.get(event, [])
         callbacks.remove(callback)
         self.__events[event] = callbacks
+
+class Thread(threading.Thread, Events):
+    def __init__(self):
+        super(Thread, self).__init__()
+        Events.__init__(self)
 
 class Window(object):
 
@@ -156,5 +162,5 @@ __all__ = [
     "set_current_session", "get_config_dir", "property",
     
     # classes
-    "Events", "Window", "Dialog", "MessageBox"
+    "Events", "Window", "Dialog", "MessageBox", "Thread"
 ]
