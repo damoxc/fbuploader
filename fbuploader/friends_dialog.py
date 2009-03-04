@@ -28,9 +28,8 @@ from fbuploader.common import Dialog, Events, signal
 class FriendsDialog(Dialog, Events):
     
     def __init__(self, user_uid, friends):
-        glade_file = resource_filename("fbuploader", "glade/fbuploader.glade")
         Events.__init__(self)
-        super(FriendsDialog, self).__init__(glade_file, "friends_dialog")
+        super(FriendsDialog, self).__init__("friends_dialog")
         
         # Set up the list of friends names and uids
         friends.sort(lambda x, y: cmp(x["name"], y["name"]))
