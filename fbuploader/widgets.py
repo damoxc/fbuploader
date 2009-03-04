@@ -23,9 +23,20 @@
 import os
 import gtk
 import logging
-from fbuploader.common import Events
+from fbuploader.common import Events, get_session_dir
 
 log = logging.getLogger(__name__)
+
+def scale_image(pixbuf, width=None, height=None):
+    if width is None and height is None:
+        raise Exception("Neither height nor width has been specified")
+    
+    cur_width = pixbuf.get_width()
+    cur_height = pixbuf.get_height()
+    
+    if cur_width >= width or cur_height >= height:
+        # We need to do a resize
+        pass
 
 class PhotoPreview(Events, gtk.EventBox):
     __gtype_name__ = "PhotoPreview"
@@ -38,7 +49,7 @@ class PhotoPreview(Events, gtk.EventBox):
         self.pixbuf = None
         self.is_resize = False
         self.filename = None
-        self.connect("size-allocate", self.on_image_size_allocate)
+        self.image.connect("size-allocate", self.on_image_size_allocate)
         self.connect("button-press-event", self.on_button_press_event)
     
     def _scale_image(self, allocation=None):
@@ -108,8 +119,40 @@ class PhotoView(gtk.IconView):
         self.set_item_width(100)
     
     def add_photo(self, filename):
+        # Load the photo from the specified file
         pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
+        
+        # Get the widget and height of the photo, we may need to do some
+        # scaling!
         width, height = pixbuf.get_width(), pixbuf.get_height()
+        
+        if width > 604:
+            # We need to resize the photo to the largest that facebook accepts,
+            # there is zero point in working with anything larger.
+            ratio = width / 604.0
+            width = 604
+            height = int(height / ratio)
+            pixbuf = pixbuf.scale_simple(width, height,
+                                         gtk.gdk.INTERP_BILINEAR)
+        
+        # Save the possibly scaled pixbuf in the session directory
+        filename = get_session_dir(os.path.basename(filename))
+        if not os.path.isdir(os.path.dirname(filename)):
+            os.makedirs(os.path.dirname(filename))
+        pixbuf.save(filename, "jpeg", {"quality": "79"})
+        self.load_photo(filename, pixbuf, (width, height))        
+        return filename, width, height
+
+    def load_photo(self, filename, pixbuf=None, size=None):
+        # Load the photo from the specified file or use the passed in pixbuf
+        pixbuf = pixbuf or gtk.gdk.pixbuf_new_from_file(filename)
+        
+        if size is not None:
+            width, height = size
+        else:
+            width, height = pixbuf.get_width(), pixbuf.get_height()
+        
+        # Scale the image to produce a thumbnail
         if width > height:
             ratio = width / 100.0
             width, height = 100, int(height / ratio)
@@ -118,8 +161,6 @@ class PhotoView(gtk.IconView):
             width, height = int(width / ratio), 100
 
         scaled = pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
-        del width
-        del height
         del pixbuf
         name = os.path.basename(filename)
         self.get_model().append((filename, name, scaled))

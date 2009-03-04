@@ -22,14 +22,16 @@
 
 import os
 import gtk
+import time
 import urllib
 import logging
 import facebook
 import tempfile
 import gtk.glade
 import threading
+import cPickle as pickle
 
-from fbuploader.common import MessageBox, Window, signal
+from fbuploader.common import *
 from fbuploader.friends_dialog import FriendsDialog
 from fbuploader.photochooser_dialog import PhotoChooser
 from fbuploader.upload_dialog import UploadDialog
@@ -39,6 +41,21 @@ log = logging.getLogger(__name__)
 
 FB_API_KEY = "a7b58c2702d421a270df42cfff9f4007"
 FB_SECRET_KEY = "a01ccd6ae703d353a701ea49f63b7667"
+
+class Autosave(threading.Thread):
+    def __init__(self, callback, interval=30):
+        super(Autosave, self).__init__()
+        self.callback = callback
+        self.interval = interval
+        self.do_abort = False
+    
+    def abort(self):
+        self.do_abort = True
+    
+    def run(self):
+        while not self.do_abort:
+            self.callback()
+            time.sleep(self.interval)
 
 class AlbumDownloader(threading.Thread):
     def __init__(self, facebook, callback):
@@ -130,12 +147,16 @@ class MainWindow(Window):
         self.tree.get_widget("preview_viewport").add(self.preview_image)
         self.preview_image.on("tag-event", self.on_photo_tag)
         
+        # Initialize the fb_session variable
+        self.fb_session = None
+        
         # Initialize the photo_chooser variable that will contain the
         # filechooser dialog.
         self.photo_chooser = None
         
-        # Initialize the photo_info dictionary used to store the captions
-        # and tags for the photos.
+        # Initialize the photos list and photo_info dictionary used to store 
+        # the order and information (width/height/caption/tags) for the photos
+        self.photos = []
         self.photo_info = {}
         
         # Initialize the friends_chooser variable that will contain the
@@ -146,6 +167,89 @@ class MainWindow(Window):
         # upload dialog later.
         self.upload_dialog = None
     
+    def check_sessions(self):
+        sessions = []
+        for item in os.listdir(get_config_dir()):
+            if os.path.isdir(os.path.join(get_config_dir(), item)):
+                sessions.append(item)
+        return sessions
+    
+    def clear_photo_albums(self):
+        albums = self.albums[:]
+        for album in albums:
+            self.albums.remove(album)
+            self.albums_combobox.remove_text(0)
+        
+    def get_signals(self):
+        signals = super(MainWindow, self).get_signals()
+        signals["on_main_window_event_after"] = self.quit
+        signals["on_quit_menuitem_activate"] = self.quit
+        signals["on_main_window_destroy"] = self.quit
+        return signals
+    
+    def load(self, session):
+        log.info("Loading session %s", session)
+        try:
+            set_current_session(session)
+            path = get_session_dir("data")
+            if not os.path.exists(path):
+                log.error("Session data doesn't exist")
+                return
+            session = pickle.load(open(path, "rb"))
+        except:
+            log.error("Unable to load session %d", session)
+            return
+
+        self.photos = session.get("photos")
+        self.photo_info = session.get("photo_info")
+        self.fb_session = session.get("fb_session")
+        
+        if self.fb_session["expires"] <= time.time():
+            self.login()
+        else:
+            self.facebook.session_key = self.fb_session["session_key"]
+            self.facebook.secret = FB_SECRET_KEY
+            self.facebook.uid = self.fb_session["uid"]
+
+        AlbumDownloader(self.facebook, self.on_got_albums).start()
+        FriendsDownloader(self.facebook, self.on_got_friends).start()
+        
+        for photo in self.photos:
+            info = self.photo_info[photo]
+            size = (info["width"], info["height"])
+            self.photos_view.load_photo(photo, size=size)
+    
+    def login(self):
+        logged_in = MessageBox(buttons=gtk.BUTTONS_OK)
+        logged_in.set_markup("Press OK once you have logged in.")
+        self.fb_token = self.facebook.auth.createToken()
+        self.facebook.login()
+        log.info("Logging in to Facebook")
+        if logged_in.run() == gtk.RESPONSE_OK:
+            logged_in.destroy()
+            try:
+                self.fb_session = self.facebook.auth.getSession()
+            except Exception, e:
+                log.error("Login failed")
+            else:
+                log.info("Successfully logged in")
+        else:
+            log.error("Login failed")
+    
+    def save(self):
+        session = {
+            "photos": self.photos,
+            "photo_info": self.photo_info,
+            "fb_session": self.fb_session
+        }
+        try:
+            path = get_session_dir("data")
+            if not os.path.isdir(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+            pickle.dump(session, open(path, "wb"))
+        except:
+            log.error("Unable to save session info")
+    
     def set_form_sensitive(self, sensitive=True):
         action = sensitive and "Enabling" or "Disabling"
         log.info("%s album form", action)
@@ -154,13 +258,9 @@ class MainWindow(Window):
         self.album_name.set_sensitive(sensitive)
         self.album_description.set_sensitive(sensitive)
         self.album_location.set_sensitive(sensitive)
-        
-    def get_signals(self):
-        signals = super(MainWindow, self).get_signals()
-        signals["on_main_window_event_after"] = self.quit
-        signals["on_quit_menuitem_activate"] = self.quit
-        signals["on_main_window_destroy"] = self.quit
-        return signals
+    
+    def set_tags(self, tags):
+        self.tags_entry.set_text("; ".join([tag[1] for tag in tags]))
     
     def quit(self, *args):
         log.info("Shutting down main window")
@@ -171,21 +271,8 @@ class MainWindow(Window):
         try:
             gtk.main_quit()
         except RuntimeError: pass
-    
-    def clear_photo_albums(self):
-        albums = self.albums[:]
-        for album in albums:
-            self.albums.remove(album)
-            self.albums_combobox.remove_text(0)
-    
-    def get_album_by_name(self, name):
-        for album in self.albums:
-            if album["name"] == name:
-                return album
-    
-    def set_tags(self, tags):
-        self.tags_entry.set_text("; ".join([tag[1] for tag in tags]))
-    
+
+    ## Event Handlers ##
     def on_got_albums(self, albums):
         self.clear_photo_albums()
         for album in albums:
@@ -200,25 +287,19 @@ class MainWindow(Window):
     def on_got_albumcover(self, path):
         self.album_cover.set_from_file(path)
     
+    def on_autosave(self):
+        log.info("Autosaving session data")
+        self.save()
+    
     @signal
     def on_main_window_show(self, e):
-        logged_in = MessageBox(buttons=gtk.BUTTONS_OK)
-        logged_in.set_markup("Press OK once you have logged in.")
-        self.fb_token = self.facebook.auth.createToken()
-        self.facebook.login()
-        log.info("Logging in to Facebook")
-        if logged_in.run() == gtk.RESPONSE_OK:
-            logged_in.destroy()
-            try:
-                self.fb_session = self.facebook.auth.getSession()
-            except Exception, e:
-                log.error("Login failed")
-            else:
-                log.info("Successfully logged in")
-                AlbumDownloader(self.facebook, self.on_got_albums).start()
-                FriendsDownloader(self.facebook, self.on_got_friends).start()
+        old_sessions = self.check_sessions()
+        if old_sessions:
+            self.load(old_sessions[0])
         else:
-            log.error("Login failed")
+            create_new_session()
+            self.login()
+        Autosave(self.on_autosave).start()
     
     @signal
     def on_albums_combobox_changed(self, e):
@@ -256,7 +337,12 @@ class MainWindow(Window):
             return True
 
         for filename in self.photo_chooser.dialog.get_filenames():
-            self.photos_view.add_photo(filename)
+            filename, width, height = self.photos_view.add_photo(filename)
+            self.photos.append(filename)
+            self.photo_info[filename] = {
+                "width": width,
+                "height": height
+            }
     
     @signal
     def on_photos_view_selection_changed(self, *args):

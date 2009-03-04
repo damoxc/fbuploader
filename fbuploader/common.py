@@ -20,9 +20,11 @@
 # 	Boston, MA    02110-1301, USA.
 #
 
-import gtk
+import os
+import time
 import logging
-import gtk.glade
+import gtk, gtk.glade
+import xdg, xdg.BaseDirectory
 from pkg_resources import resource_filename
 
 log = logging.getLogger(__name__)
@@ -30,6 +32,41 @@ log = logging.getLogger(__name__)
 def signal(func):
     func._signal = True
     return func
+
+session = None
+def create_new_session():
+    return str(int(time.time()))
+
+def get_current_session():
+    global session
+    if session is None:
+        session = create_new_session()
+    return session
+
+def get_session_dir(filename=None):
+    if False:
+        pass
+    else:
+        folder = os.path.join(xdg.BaseDirectory.save_config_path("fbuploader"),
+                              get_current_session())
+        if filename:
+            return os.path.join(folder, filename)
+        else:
+            return folder
+
+def set_current_session(session_id):
+    global session
+    session = session_id
+
+def get_config_dir(filename=None):
+    if False:
+        pass
+    else:
+        folder = xdg.BaseDirectory.save_config_path("fbuploader")
+        if filename:
+            return os.path.join(folder, filename)
+        else:
+            return folder
 
 _prop = property
 def property(fget=None, fset=None, fdel=None, doc=None):
@@ -112,3 +149,12 @@ class MessageBox(gtk.MessageDialog):
                                          message_format)
         self.set_icon_from_file(resource_filename("fbuploader",
                                                   "data/fbuploader64.png"))
+
+__all__ = [
+    # methods
+    "signal", "create_new_session", "get_current_session", "get_session_dir",
+    "set_current_session", "get_config_dir", "property",
+    
+    # classes
+    "Events", "Window", "Dialog", "MessageBox"
+]
