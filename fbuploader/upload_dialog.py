@@ -24,16 +24,16 @@ import os
 import gtk
 import logging
 import threading
-from fbuploader.common import Dialog, signal
+from math import ceil
+from fbuploader.common import Dialog, Events, signal
 
 log = logging.getLogger(__name__)
 
-class PhotoUploader(threading.Thread):
+class PhotoUploader(threading.Thread, Events):
 
-    def __init__(self, facebook, aid, upload_cb, tag_cb):
+    def __init__(self, facebook, aid):
         super(PhotoUploader, self).__init__()
-        self.upload_cb = upload_cb
-        self.tag_cb = tag_cb
+        Events.__init__(self)
         self.queue = []
         self.aid = aid
         self.do_upload = facebook.photos.upload
@@ -43,9 +43,16 @@ class PhotoUploader(threading.Thread):
         while 1:
             if not self.queue: break
             photo, info = self.queue.pop(0)
-            log.info("Uploading photo: %s", os.path.basename(photo))
-            upload_info = self.do_upload(photo, self.aid, info.get("caption"))
-            self.upload_cb(photo)
+            name = os.path.basename(photo)
+            log.info("Uploading photo: %s", name)
+            
+            self.fire("before-upload", photo)
+            def cb_upload(count, chunk_size, total_size):
+                self.fire("upload", photo, count, chunk_size, total_size)
+            upload_info = self.do_upload(photo, self.aid, info.get("caption"),
+                                         callback=cb_upload)
+            self.fire("after-upload", photo, upload_info)
+            
             pid = upload_info["pid"]
             def format_tag(tag):
                 tag_dict = {"x": tag[1], "y": tag[2]}
@@ -54,10 +61,11 @@ class PhotoUploader(threading.Thread):
                 else:
                     tag_dict["tag_text"] = tag[0]
             tags = map(format_tag, info.get("tags", []))
-            log.info("Tagging photo: %s", photo)
             if tags:
+                log.info("Tagging photo: %s", name)
+                self.fire("before-tag", photo)
                 self.add_tag(pid, tags=tags)
-            self.tag_cb(photo)
+                self.fire("after-tag", photo)
     
     def upload(self, photo, info):
         self.queue.append((photo, info))
@@ -68,7 +76,9 @@ class UploadDialog(Dialog):
         super(UploadDialog, self).__init__("upload_dialog")
         log.info("Initializing upload dialog.")
         self.main_window = main_window
+        self.total = self.tree.get_widget("upload_total")
         self.total_progressbar = self.tree.get_widget("upload_total_progressbar")
+        self.current = self.tree.get_widget("upload_current")
         self.current_progressbar = self.tree.get_widget("upload_current_progressbar")
     
     def run(self):
@@ -76,20 +86,51 @@ class UploadDialog(Dialog):
         aid = self.main_window.album["aid"]
         facebook = self.main_window.facebook
         
-        uploader = PhotoUploader(facebook, aid, self.on_upload, self.on_tag)
+        self.uploader = PhotoUploader(facebook, aid)
+        self.uploader.on("before-upload", self.on_before_upload)
+        self.uploader.on("upload", self.on_upload)
+        self.uploader.on("after-upload", self.on_after_upload)
+        self.uploader.on("before-tag", self.on_before_tag)
+        self.uploader.on("after-tag", self.on_after_tag)
+        
         self.total_photos = len(self.main_window.photos)
         self.complete_photos = 0
         for photo in self.main_window.photos:
-            uploader.upload(photo, self.main_window.photo_info[photo])
-        uploader.start()
+            self.uploader.upload(photo, self.main_window.photo_info[photo])
+        self.uploader.start()
+    
+    def on_before_upload(self, photo):
+        text = "%s (Uploading 0%%)" % os.path.basename(photo)
+        log.debug("Setting current label to '%s'", text)
+        self.current.set_text(text)
+        self.current_progressbar.set_fraction(0)
+    
+    def on_upload(self, photo, count, chunk_size, total_size):
+        progress = count / ceil(total_size / float(chunk_size))
+        name = os.path.basename(photo)
+        text = "%s (Uploading %.0f%%)" % (name, progress*100)
+        log.debug("Setting current label to '%s'", text)
+        self.current.set_text(text)
+        log.debug("Setting current progressbar to '%f'", progress)
+        self.current_progressbar.set_fraction(progress)
         
-    def on_upload(self, photo):
+    def on_after_upload(self, photo, upload_info):
         self.complete_photos += 1
         progress = (self.complete_photos / float(self.total_photos))
+        text = "%s (Uploading 100%%)" % os.path.basename(photo)
+        log.debug("Setting current label to '%s'", text)
+        self.current.set_text(text)
+        log.debug("Setting total progressbar to '%f'", progress)
         self.total_progressbar.set_fraction(progress)
     
-    def on_tag(self, photo):
-        pass
+    def on_before_tag(self, photo):
+        text = "%s (Tagging)" % os.path.basename(photo)
+        log.debug("Setting current label to '%s'", text)
+        self.current.set_text(text)
+    
+    def on_after_tag(self, photo):
+        log.debug("Setting current label to ''")
+        self.current.set_text("")
 
     @signal
     def on_upload_dialog_delete_event(self, *args):

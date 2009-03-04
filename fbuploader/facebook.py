@@ -692,10 +692,7 @@ class PhotosProxy(PhotosProxy):
                 raise Exception('Error uploading photo: Facebook returned HTTP %s (%s)' % (response.status, response.reason))
 
             response = response.read()
-        except Exception, e:
-            import traceback
-            traceback.print_exc()
-            exit(1)
+        except:
             # sending the photo failed, perhaps we are using GAE
             try:
                 from google.appengine.api import urlfetch
