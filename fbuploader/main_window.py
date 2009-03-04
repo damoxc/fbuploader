@@ -29,7 +29,7 @@ import tempfile
 import gtk.glade
 import threading
 from pkg_resources import resource_filename
-from fbuploader.common import Window, signal
+from fbuploader.common import MessageBox, Window, signal
 from fbuploader.friends_dialog import FriendsDialog
 from fbuploader.photochooser_dialog import PhotoChooser
 from fbuploader.widgets import PhotoView, PhotoPreview
@@ -197,7 +197,7 @@ class MainWindow(Window):
     
     @signal
     def on_main_window_show(self, e):
-        logged_in = gtk.MessageDialog(buttons=gtk.BUTTONS_OK)
+        logged_in = MessageBox(buttons=gtk.BUTTONS_OK)
         logged_in.set_markup("Press OK once you have logged in.")
         self.fb_token = self.facebook.auth.createToken()
         self.facebook.login()
@@ -295,7 +295,7 @@ class MainWindow(Window):
     
     @signal
     def on_upload_button_clicked(self, *args):
-        are_you_sure = gtk.MessageDialog(buttons=gtk.BUTTONS_YES_NO)
+        are_you_sure = MessageBox(buttons=gtk.BUTTONS_YES_NO)
         are_you_sure.set_markup("Are you sure you wish to upload?")
         response = are_you_sure.run()
         are_you_sure.hide()

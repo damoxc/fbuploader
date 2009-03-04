@@ -30,3 +30,14 @@ class UploadDialog(Dialog):
     
     def __init__(self):
         super(UploadDialog, self).__init__("upload_dialog")
+        log.info("Initializing upload dialog.")
+
+    @signal
+    def on_upload_dialog_delete_event(self, *args):
+        self.dialog.hide()
+        self.dialog.response(gtk.RESPONSE_CANCEL)
+        return True
+    
+    @signal
+    def on_upload_cancel_button_clicked(self, *args):
+        pass

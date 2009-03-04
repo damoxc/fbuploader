@@ -30,7 +30,7 @@ setup(name="FBUploader",
       author="Damien Churchill",
       author_email="damoxc@gmail.com",
       packages=find_packages(exclude="tests"),
-      package_data={"fbuploader": ["glade/fbuploader.glade"]},
+      package_data={"fbuploader": ["data/*"]},
       entry_points = """
       [console_scripts]
       fbuploader = fbuploader.main:main

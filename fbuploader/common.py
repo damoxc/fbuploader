@@ -20,6 +20,7 @@
 # 	Boston, MA    02110-1301, USA.
 #
 
+import gtk
 import logging
 import gtk.glade
 from pkg_resources import resource_filename
@@ -70,14 +71,14 @@ class Events(object):
 
 class Window(object):
 
-    glade_file = resource_filename("fbuploader", "glade/fbuploader.glade")
+    glade_file = resource_filename("fbuploader", "data/fbuploader.glade")
+    icon = resource_filename("fbuploader", "data/fbuploader64.png")
     
     def __init__(self, window_name, icon=None):
         self.tree = gtk.glade.XML(self.glade_file)
         self.window = self.tree.get_widget(window_name)
-        if icon is not None:
-            icon = get_icon(icon)
-            self.window.set_icon(icon)
+        icon = icon or self.icon
+        self.window.set_icon_from_file(icon)
         self.tree.signal_autoconnect(self.get_signals())
     
     def get_signals(self):
@@ -103,3 +104,11 @@ class Dialog(Window):
     
     def run(self):
         return self.dialog.run()
+
+class MessageBox(gtk.MessageDialog):
+    def __init__(self, parent=None, flags=0, type=gtk.MESSAGE_INFO,
+                 buttons=gtk.BUTTONS_NONE, message_format=None):
+        super(MessageBox, self).__init__(parent, flags, type, buttons,
+                                         message_format)
+        self.set_icon_from_file(resource_filename("fbuploader",
+                                                  "data/fbuploader64.png"))
