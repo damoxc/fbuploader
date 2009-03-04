@@ -45,6 +45,7 @@ class PhotoPreview(Events, gtk.EventBox):
         super(PhotoPreview, self).__init__()
         gtk.EventBox.__init__(self)
         self.image = gtk.Image()
+        self.image.set_alignment(0,0)
         self.add(self.image)
         self.pixbuf = None
         self.is_resize = False
@@ -82,12 +83,12 @@ class PhotoPreview(Events, gtk.EventBox):
     
     def on_image_size_allocate(self, *args):
         allocation = self.get_allocation()
-        """if self.pixbuf is None: return
+        if self.pixbuf is None: return
         if self.is_resize:
-            self.image.set_from_pixbuf(self._scale_image())
+            #self.image.set_from_pixbuf(self._scale_image())
             self.is_resize = False
         else:
-            self.is_resize = True"""
+            self.is_resize = True
     
     def on_button_press_event(self, widget, event):
         if not hasattr(self, "width"): return
@@ -108,15 +109,17 @@ class PhotoPreview(Events, gtk.EventBox):
         self.image.set_from_pixbuf(scaled_pixbuf)
         self.get_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.CROSSHAIR))
 
-class PhotoView(gtk.IconView):
+class PhotoView(Events, gtk.IconView):
     __gtype_name__ = "PhotoView"
     
     def __init__(self, model=None):
         photo_model = gtk.ListStore(str, str, gtk.gdk.Pixbuf)
-        super(PhotoView, self).__init__(photo_model)
+        super(PhotoView, self).__init__()
+        gtk.IconView.__init__(self, photo_model)
         self.set_text_column(1)
         self.set_pixbuf_column(2)
         self.set_item_width(100)
+        self.connect("key-press-event", self.on_key_press_event)
     
     def add_photo(self, filename):
         # Load the photo from the specified file
@@ -139,7 +142,7 @@ class PhotoView(gtk.IconView):
         filename = get_session_dir(os.path.basename(filename))
         if not os.path.isdir(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
-        pixbuf.save(filename, "jpeg", {"quality": "79"})
+        pixbuf.save(filename, "jpeg", {"quality": "95"})
         self.load_photo(filename, pixbuf, (width, height))        
         return filename, width, height
 
@@ -165,3 +168,16 @@ class PhotoView(gtk.IconView):
         name = os.path.basename(filename)
         self.get_model().append((filename, name, scaled))
         self.queue_resize()
+    
+    def on_key_press_event(self, iconview, event, *args):
+        if event.keyval != 65535:
+            return
+        selection = self.get_selected_items()
+        if not selection:
+            return
+        
+        tree_iter = self.get_model().get_iter(selection[0])
+        filename = self.get_model().get(tree_iter, 0)[0]
+        self.get_model().remove(tree_iter)
+        self.select_path(selection[0])
+        self.fire("delete-photo", filename)

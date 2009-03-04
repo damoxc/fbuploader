@@ -159,6 +159,7 @@ class MainWindow(Window):
         
         # Add in the photos view widget
         self.photos_view = PhotoView()
+        self.photos_view.on("delete-photo", self.on_photos_view_delete_photo)
         self.tree.get_widget("photos_scrolled").add(self.photos_view)
         self.photos_view.connect("selection-changed", self.on_photos_view_selection_changed)
         
@@ -403,6 +404,11 @@ class MainWindow(Window):
         self.caption_entry.set_text(info.get("caption", ""))
         self.set_tags(info.get("tags", []))
         return True
+    
+    @signal
+    def on_photos_view_delete_photo(self, photo):
+        self.photos.remove(photo)
+        del self.photo_info[photo]
     
     @signal
     def on_photo_tag(self, x, y, event):

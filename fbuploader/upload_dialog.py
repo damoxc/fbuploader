@@ -25,15 +25,14 @@ import gtk
 import logging
 import threading
 from math import ceil
-from fbuploader.common import Dialog, Events, signal
+from fbuploader.common import Dialog, Thread, signal
 
 log = logging.getLogger(__name__)
 
-class PhotoUploader(threading.Thread, Events):
+class PhotoUploader(Thread):
 
     def __init__(self, facebook, aid):
         super(PhotoUploader, self).__init__()
-        Events.__init__(self)
         self.queue = []
         self.aid = aid
         self.do_upload = facebook.photos.upload
