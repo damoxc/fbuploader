@@ -288,7 +288,10 @@ class MainWindow(Window):
     ## Properties ##
     @property
     def album(self):
-        return self.albums[self.albums_combobox.get_active()]
+        try:
+            return self.albums[self.albums_combobox.get_active()]
+        except:
+            return None
 
     ## Event Handlers ##
     def on_got_albums(self, albums):
@@ -297,6 +300,7 @@ class MainWindow(Window):
             self.albums.append(album)
             self.albums_combobox.append_text("%s (%d Photos)" % (album["name"],
                                                                  album["size"]))
+        self.albums_combobox.set_active(0)
         self.set_form_sensitive(True)
     
     def on_got_friends(self, friends):
