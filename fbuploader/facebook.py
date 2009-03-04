@@ -616,7 +616,7 @@ class FriendsProxy(FriendsProxy):
 class PhotosProxy(PhotosProxy):
     """Special proxy for facebook.photos."""
 
-    def upload(self, image, aid=None, caption=None, size=(604, 1024), filename=None):
+    def upload(self, image, aid=None, caption=None, size=(604, 1024), filename=None, callback=None):
         """Facebook API call. See http://developers.facebook.com/documentation.php?v=1.0&method=photos.upload
 
         size -- an optional size (width, height) to resize the image to before uploading. Resizes by default
@@ -659,22 +659,43 @@ class PhotosProxy(PhotosProxy):
         content_type, body = self.__encode_multipart_formdata(list(args.iteritems()), [(image, data)])
         urlinfo = urlparse.urlsplit(self._client.facebook_url)
         try:
-            h = httplib.HTTP(urlinfo[1])
+            content_length = len(body)
+            chunk_size = 4096
+            
+            h = httplib.HTTPConnection(urlinfo[1])
             h.putrequest('POST', urlinfo[2])
             h.putheader('Content-Type', content_type)
-            h.putheader('Content-Length', str(len(body)))
+            h.putheader('Content-Length', str(content_length))
             h.putheader('MIME-Version', '1.0')
             h.putheader('User-Agent', 'PyFacebook Client Library')
             h.endheaders()
-            h.send(body)
+            
+            count = 0
+            while len(body) > 0:
+                if len(body) < chunk_size:
+                    data = body
+                    body = ""
+                else:
+                    data = body[0:chunk_size]
+                    body = body[chunk_size:]
 
-            reply = h.getreply()
+                h.send(data)
+                count += 1
+                try:
+                    callback(count, chunk_size, content_length)
+                except:
+                    pass
 
-            if reply[0] != 200:
-                raise Exception('Error uploading photo: Facebook returned HTTP %s (%s)' % (reply[0], reply[1]))
+            response = h.getresponse()
 
-            response = h.file.read()
-        except:
+            if response.status != 200:
+                raise Exception('Error uploading photo: Facebook returned HTTP %s (%s)' % (response.status, response.reason))
+
+            response = response.read()
+        except Exception, e:
+            import traceback
+            traceback.print_exc()
+            exit(1)
             # sending the photo failed, perhaps we are using GAE
             try:
                 from google.appengine.api import urlfetch
