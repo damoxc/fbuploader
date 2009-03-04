@@ -76,13 +76,11 @@ class FriendsDownloader(threading.Thread):
     def run(self):
         log.info("Downloading friend information")
         friends = {}
-        for friend in self.facebook.users.getInfo(self.facebook.friends.get()):
+        uids = self.facebook.friends.get()
+        uids.append(self.facebook.uid)
+        for friend in self.facebook.users.getInfo(uids):
             friends[friend["name"]] = friend["uid"]
             friends[friend["uid"]] = friend["name"]
-
-        me = self.facebook.users.getInfo(self.facebook.uid)[0]
-        friends[me["name"]] = me["uid"]
-        friends[me["uid"]] = me["name"]
         log.debug("Running FriendsDownloader callback")
         self.callback(friends)
 
