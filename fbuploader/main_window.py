@@ -75,8 +75,15 @@ class FriendsDownloader(threading.Thread):
     
     def run(self):
         log.info("Downloading friend information")
-        friends = self.facebook.users.getInfo(self.facebook.friends.get())
-        friends.append(self.facebook.users.getInfo(self.facebook.uid)[0])
+        friends = {}
+        for friend in self.facebook.users.getInfo(self.facebook.friends.get()):
+            friends[friend["name"]] = friend["uid"]
+            friends[friend["uid"]] = friend["name"]
+
+        me = self.facebook.users.getInfo(self.facebook.uid)[0]
+        friends[me["name"]] = me["uid"]
+        friends[me["uid"]] = me["name"]
+        log.debug("Running FriendsDownloader callback")
         self.callback(friends)
 
 class AlbumCoverDownloader(threading.Thread):
@@ -260,7 +267,13 @@ class MainWindow(Window):
         self.album_location.set_sensitive(sensitive)
     
     def set_tags(self, tags):
-        self.tags_entry.set_text("; ".join([tag[1] for tag in tags]))
+        names = []
+        for tag in tags:
+            if type(tag[0]) is int:
+                names.append(self.friends[tag[0]])
+            else:
+                names.append(tag[0])
+        self.tags_entry.set_text("; ".join(names))
     
     def quit(self, *args):
         log.info("Shutting down main window")
@@ -271,6 +284,11 @@ class MainWindow(Window):
         try:
             gtk.main_quit()
         except RuntimeError: pass
+        
+    ## Properties ##
+    @property
+    def album(self):
+        return self.albums[self.albums_combobox.get_active()]
 
     ## Event Handlers ##
     def on_got_albums(self, albums):
@@ -394,5 +412,5 @@ class MainWindow(Window):
             return
         
         if self.upload_dialog is None:
-            self.upload_dialog = UploadDialog(self.photo_info)
+            self.upload_dialog = UploadDialog(self)
         self.upload_dialog.run()

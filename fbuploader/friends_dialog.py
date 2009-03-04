@@ -31,9 +31,12 @@ class FriendsDialog(Dialog, Events):
         Events.__init__(self)
         super(FriendsDialog, self).__init__("friends_dialog")
         
-        # Set up the list of friends names and uids
-        friends.sort(lambda x, y: cmp(x["name"], y["name"]))
+        # Set up the dictionary of friends names and uids and the alphabetical
+        # list.
         self.friends = friends
+        self.friend_names = [friend for friend in friends if type(friend) is str]
+        self.friend_names.sort(lambda x, y: cmp(x.lower(), y.lower()))
+        
         self.user_uid = user_uid
         self.__recent_friends = {}
 
@@ -62,11 +65,12 @@ class FriendsDialog(Dialog, Events):
         model = self.all_friends.get_model()
         model.clear()
         count = 0
-        for friend in self.friends:
-            if friend["uid"] == self.user_uid:
-                self.add_recent_friend(friend["name"], friend["uid"])
-            if friend["name"].startswith(filter_text):
-                model.append((friend["uid"], friend["name"]))
+        for friend in self.friend_names:
+            uid = self.friends[friend]
+            if uid == self.user_uid:
+                self.add_recent_friend(friend, uid)
+            if filter_text.lower() in friend.lower():
+                model.append((uid, friend))
                 count += 1
         return count
     
