@@ -160,7 +160,7 @@ class PhotoView(gtk.IconView):
             ratio = height / 100.0
             width, height = int(width / ratio), 100
 
-        scaled = pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
+        scaled = pixbuf.scale_simple(width, height, gtk.gdk.INTERP_HYPER)
         del pixbuf
         name = os.path.basename(filename)
         self.get_model().append((filename, name, scaled))
