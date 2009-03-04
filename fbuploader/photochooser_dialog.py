@@ -30,8 +30,7 @@ log = logging.getLogger(__name__)
 class PhotoChooser(Dialog):
 
     def __init__(self):
-        glade_file = resource_filename("fbuploader", "glade/fbuploader.glade")
-        super(PhotoChooser, self).__init__(glade_file, "photochooser_dialog")
+        super(PhotoChooser, self).__init__("photochooser_dialog")
         
         log.info("Initializing photochooser dialog.")
         

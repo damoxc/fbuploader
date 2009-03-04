@@ -97,8 +97,7 @@ class MainWindow(Window):
 
     def __init__(self):
         log.info("Initializing Main Window")
-        glade_file = resource_filename("fbuploader", "glade/fbuploader.glade")
-        super(MainWindow, self).__init__(glade_file, "main_window")
+        super(MainWindow, self).__init__("main_window")
         self.facebook = facebook.Facebook(FB_API_KEY, FB_SECRET_KEY)
         self.albums = []
         
@@ -293,3 +292,14 @@ class MainWindow(Window):
         info["tags"] = tags
         self.set_tags(tags)
         self.photo_info[self.preview_image.filename] = info
+    
+    @signal
+    def on_upload_button_clicked(self, *args):
+        are_you_sure = gtk.MessageDialog(buttons=gtk.BUTTONS_YES_NO)
+        are_you_sure.set_markup("Are you sure you wish to upload?")
+        response = are_you_sure.run()
+        are_you_sure.hide()
+        if response != gtk.RESPONSE_YES:
+            return
+        
+        print "We got an upload on our hands laddies"

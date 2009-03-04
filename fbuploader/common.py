@@ -22,6 +22,7 @@
 
 import logging
 import gtk.glade
+from pkg_resources import resource_filename
 
 log = logging.getLogger(__name__)
 
@@ -69,8 +70,10 @@ class Events(object):
 
 class Window(object):
 
-    def __init__(self, glade_file, window_name, icon=None):
-        self.tree = gtk.glade.XML(glade_file)
+    glade_file = resource_filename("fbuploader", "glade/fbuploader.glade")
+    
+    def __init__(self, window_name, icon=None):
+        self.tree = gtk.glade.XML(self.glade_file)
         self.window = self.tree.get_widget(window_name)
         if icon is not None:
             icon = get_icon(icon)
@@ -94,8 +97,8 @@ class Window(object):
 
 class Dialog(Window):
     
-    def __init__(self, glade_file, window_name, icon=None):
-        super(Dialog, self).__init__(glade_file, window_name, icon=icon)
+    def __init__(self, dialog_name, icon=None):
+        super(Dialog, self).__init__(dialog_name, icon=icon)
         self.dialog = self.window
     
     def run(self):
