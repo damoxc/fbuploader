@@ -28,10 +28,11 @@ import facebook
 import tempfile
 import gtk.glade
 import threading
-from pkg_resources import resource_filename
+
 from fbuploader.common import MessageBox, Window, signal
 from fbuploader.friends_dialog import FriendsDialog
 from fbuploader.photochooser_dialog import PhotoChooser
+from fbuploader.upload_dialog import UploadDialog
 from fbuploader.widgets import PhotoView, PhotoPreview
 
 log = logging.getLogger(__name__)
@@ -140,6 +141,10 @@ class MainWindow(Window):
         # Initialize the friends_chooser variable that will contain the
         # friends chooser dialog.
         self.friends_chooser = None
+        
+        # Initialize the upload_dialog variable that will contain the
+        # upload dialog later.
+        self.upload_dialog = None
     
     def set_form_sensitive(self, sensitive=True):
         action = sensitive and "Enabling" or "Disabling"
@@ -302,4 +307,6 @@ class MainWindow(Window):
         if response != gtk.RESPONSE_YES:
             return
         
-        print "We got an upload on our hands laddies"
+        if self.upload_dialog is None:
+            self.upload_dialog = UploadDialog(self.photo_info)
+        self.upload_dialog.run()

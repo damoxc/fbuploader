@@ -28,9 +28,10 @@ log = logging.getLogger(__name__)
 
 class UploadDialog(Dialog):
     
-    def __init__(self):
+    def __init__(self, photo_info):
         super(UploadDialog, self).__init__("upload_dialog")
         log.info("Initializing upload dialog.")
+        self.photo_info = photo_info
 
     @signal
     def on_upload_dialog_delete_event(self, *args):
