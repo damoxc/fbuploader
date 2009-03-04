@@ -26,7 +26,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s,%(msecs)03d %(levelname)-5.5s [%(name)s:%(lineno)d] %(message)s',
     datefmt='%H:%M:%S',
-    qualname='dryad'
+    qualname='fbuploader'
 )
 
 def main():
