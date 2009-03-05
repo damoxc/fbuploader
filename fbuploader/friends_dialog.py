@@ -34,7 +34,8 @@ class FriendsDialog(Dialog, Events):
         # Set up the dictionary of friends names and uids and the alphabetical
         # list.
         self.friends = friends
-        self.friend_names = [friend for friend in friends if type(friend) is str]
+        self.friend_names = [friend for friend in friends if 
+                             isinstance(friend, unicode)]
         self.friend_names.sort(lambda x, y: cmp(x.lower(), y.lower()))
         
         self.user_uid = user_uid
@@ -102,7 +103,7 @@ class FriendsDialog(Dialog, Events):
         selection = self.recent_friends.get_selection()
         if selection.count_selected_rows() > 0:
             model, tree_iter = selection.get_selected()
-            self.uid, self.name = model.get(tree_iter, 0, 1)
+            self.uid = model.get(tree_iter, 0)
             self.add_recent_friend(self.name, self.uid)
             self.dialog.response(gtk.RESPONSE_OK)
         else:
@@ -117,7 +118,7 @@ class FriendsDialog(Dialog, Events):
                 if selection.count_selected_rows() == 0:
                     return True
                 model, tree_iter = selection.get_selected()
-                self.uid, self.name = model.get(tree_iter, 0, 1)
+                self.uid = model.get(tree_iter, 0)
                 self.add_recent_friend(self.name, self.uid)
                 self.dialog.response(gtk.RESPONSE_OK)
     

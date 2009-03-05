@@ -74,14 +74,15 @@ class FriendsDownloader(threading.Thread):
         self.callback = callback
     
     def run(self):
-        log.info("Downloading friend information")
+        log.info("Downloading friends")
         friends = {}
         uids = self.facebook.friends.get()
         uids.append(self.facebook.uid)
+        log.info("Downloading friend information")
         for friend in self.facebook.users.getInfo(uids):
             friends[friend["name"]] = friend["uid"]
             friends[friend["uid"]] = friend["name"]
-        log.debug("Running FriendsDownloader callback")
+        log.info("Running FriendsDownloader callback")
         self.callback(friends)
 
 class AlbumCoverDownloader(threading.Thread):
@@ -415,11 +416,15 @@ class MainWindow(Window):
         self.friends_chooser.dialog.set_position(gtk.WIN_POS_MOUSE)
         if self.friends_chooser.run() != gtk.RESPONSE_OK:
             return True
-        uid, name = self.friends_chooser.uid, self.friends_chooser.name
+        
+        if self.friends_chooser.uid == -1:
+            value = self.friends_chooser.name
+        else:
+            value = self.friends_chooser.uid
         
         info = self.photo_info.get(self.preview_image.filename, {})
         tags = info.get("tags", [])
-        tags.append((uid, name, x, y))
+        tags.append((value, x, y))
         info["tags"] = tags
         self.set_tags(tags)
         self.photo_info[self.preview_image.filename] = info
