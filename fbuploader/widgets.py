@@ -49,7 +49,6 @@ class PhotoPreview(Events, gtk.EventBox):
         super(PhotoPreview, self).__init__()
         gtk.EventBox.__init__(self)
         self.image = gtk.Image()
-        self.image.set_alignment(0,0)
         self.add(self.image)
         self.pixbuf = None
         self.is_resize = False
@@ -191,6 +190,7 @@ class PhotoAdder(Thread):
         pixbuf = None
         size = None
         if not self.load_only:
+            filename = self.model.get_value(tree_iter, 0)
             pixbuf, filename, size = self.resize(filename)
         self.load(tree_iter, filename, pixbuf, size)
 
@@ -206,6 +206,7 @@ class QueuedPhotoAdder(PhotoAdder):
     def run(self):
         tree_iters = map(self.add, self.__queue)
         for tree_iter in tree_iters:
+            filename = None
             pixbuf = None
             size = None
             if not self.load_only:
