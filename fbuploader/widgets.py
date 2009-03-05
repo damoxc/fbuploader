@@ -40,7 +40,7 @@ def scale_image(pixbuf, width=None, height=None):
         pass
 
 loading_image = gtk.gdk.pixbuf_new_from_file(resource_filename(
-    "fbuploader", "data/fbuploader96.png"))
+    "fbuploader", "data/fbuploader64.png"))
 
 class PhotoPreview(Events, gtk.EventBox):
     __gtype_name__ = "PhotoPreview"
@@ -152,6 +152,7 @@ class PhotoAdder(Thread):
         if not os.path.isdir(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
         pixbuf.save(filename, "jpeg", {"quality": "95"})
+        self.fire("photo-added", filename, width, height)
         return pixbuf, filename, (width, height)
     
     def load(self, tree_iter, filename=None, pixbuf=None, size=None):
@@ -229,6 +230,7 @@ class PhotoView(Events, gtk.IconView):
     
     def add_photos(self, filenames):
         queued_adder = QueuedPhotoAdder(self)
+        queued_adder.on("photo-added", self.on_photo_added)
         queued_adder.queue(*filenames)
         queued_adder.start()
         self.queue_resize()
@@ -241,6 +243,9 @@ class PhotoView(Events, gtk.IconView):
         queued_adder.queue(*filenames)
         queued_adder.start()
         self.queue_resize()
+    
+    def on_photo_added(self, filename, width, height):
+        self.fire("add-photo", filename, width, height)
     
     def on_key_press_event(self, iconview, event, *args):
         if event.keyval != 65535:

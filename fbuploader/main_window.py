@@ -159,6 +159,7 @@ class MainWindow(Window):
         
         # Add in the photos view widget
         self.photos_view = PhotoView()
+        self.photos_view.on("add-photo", self.on_photos_view_add_photo)
         self.photos_view.on("delete-photo", self.on_photos_view_delete_photo)
         self.tree.get_widget("photos_scrolled").add(self.photos_view)
         self.photos_view.connect("selection-changed", self.on_photos_view_selection_changed)
@@ -231,11 +232,7 @@ class MainWindow(Window):
             self.facebook.session_key = self.fb_session["session_key"]
             self.facebook.secret = FB_SECRET_KEY
             self.facebook.uid = self.fb_session["uid"]
-        
-        for photo in self.photos:
-            info = self.photo_info[photo]
-            size = (info["width"], info["height"])
-            self.photos_view.load_photo(photo, size=size)
+        self.photos_view.load_photos(self.photos)
     
     def login(self):
         logged_in = MessageBox(buttons=gtk.BUTTONS_OK)
@@ -370,12 +367,6 @@ class MainWindow(Window):
         if self.photo_chooser.run() != gtk.RESPONSE_OK:
             return True
 
-        def on_photo_added(filename, width, height):
-            self.photos.append(filename)
-            self.photo_info[filename] = {
-                "width": width,
-                "height": height
-            }
         self.photos_view.add_photos(self.photo_chooser.dialog.get_filenames())
     
     @signal
@@ -399,6 +390,16 @@ class MainWindow(Window):
         self.caption_entry.set_text(info.get("caption", ""))
         self.set_tags(info.get("tags", []))
         return True
+    
+    @signal
+    def on_photos_view_add_photo(self, filename, width, height):
+        log.info("Adding photo %s", os.path.basename(filename))
+        log.debug("Full: %s", filename)
+        self.photos.append(filename)
+        self.photo_info[filename] = {
+            "width": width,
+            "height": height
+        }
     
     @signal
     def on_photos_view_delete_photo(self, photo):
