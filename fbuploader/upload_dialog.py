@@ -25,7 +25,14 @@ import gtk
 import logging
 import threading
 from math import ceil
+from pkg_resources import resource_filename
 from fbuploader.common import Dialog, Thread, signal
+
+try:
+    import json as simplejson
+except:
+    import simplejson
+    
 
 log = logging.getLogger(__name__)
 
@@ -55,17 +62,20 @@ class PhotoUploader(Thread):
             upload_info = self.do_upload(photo, self.aid, info.get("caption"),
                                          callback=cb_upload)
             
-            pid = upload_info["pid"]
+            pid = str(upload_info["pid"])
             def format_tag(tag):
-                tag_dict = {"x": tag[1], "y": tag[2]}
+                tag_dict = {"x": float(tag[1]), "y": float(tag[2])}
                 if type(tag[0]) is int:
                     tag_dict["tag_uid"] = tag[0]
                 else:
                     tag_dict["tag_text"] = tag[0]
+                return tag_dict
             tags = map(format_tag, info.get("tags", []))
             if tags:
+                tags = simplejson.dumps(tags)
                 log.info("Tagging photo: %s", name)
                 self.fire("before-tag", photo)
+                log.debug("Running add_tag(%r, %r)", pid, tags)
                 self.add_tag(pid, tags=tags)
                 self.fire("after-tag", photo)
             
@@ -80,6 +90,9 @@ class UploadDialog(Dialog):
         super(UploadDialog, self).__init__("upload_dialog")
         log.info("Initializing upload dialog.")
         self.main_window = main_window
+        self.image = self.tree.get_widget("upload_image")
+        self.image.set_from_file(resource_filename("fbuploader",
+                                                   "data/fbuploader64.png"))
         self.total = self.tree.get_widget("upload_total")
         self.total_progressbar = self.tree.get_widget("upload_total_progressbar")
         self.current = self.tree.get_widget("upload_current")
@@ -99,6 +112,7 @@ class UploadDialog(Dialog):
         
         self.total_photos = len(self.main_window.photos)
         self.complete_photos = 0
+        self.total.set_text("0/%d" % self.total_photos)
         for photo in self.main_window.photos:
             self.uploader.upload(photo, self.main_window.photo_info[photo])
         self.uploader.start()
@@ -117,6 +131,22 @@ class UploadDialog(Dialog):
         text = "%s (Uploading 0%%)" % os.path.basename(photo)
         log.debug("Setting current label to '%s'", text)
         self.current.set_text(text)
+        
+        # Set a thumbnail of the current image
+        pixbuf = gtk.gdk.pixbuf_new_from_file(photo)
+        width, height = pixbuf.get_width(), pixbuf.get_height()
+        
+        # Scale the image to produce a thumbnail
+        if width > height:
+            ratio = width / 128.0
+            width, height = 128, int(height / ratio)
+        else:
+            ratio = height / 128.0
+            width, height = int(width / ratio), 128
+
+        pixbuf = pixbuf.scale_simple(width, height, gtk.gdk.INTERP_HYPER)
+        
+        self.image.set_from_pixbuf(pixbuf)
         self.current_progressbar.set_fraction(0)
     
     def on_upload(self, photo, count, chunk_size, total_size):
@@ -125,7 +155,7 @@ class UploadDialog(Dialog):
         text = "%s (Uploading %.0f%%)" % (name, progress*100)
         log.debug("Setting current label to '%s'", text)
         self.current.set_text(text)
-        log.debug("Setting current progressbar to '%f'", progress)
+        log.debug("Setting current progressbar to '%f'", round(progress, 2))
         self.current_progressbar.set_fraction(progress)
         
     def on_after_upload(self, photo):
@@ -136,6 +166,9 @@ class UploadDialog(Dialog):
         self.current.set_text(text)
         log.debug("Setting total progressbar to '%f'", progress)
         self.total_progressbar.set_fraction(progress)
+        self.total.set_text("%d/%d" % (self.complete_photos, self.total_photos))
+        self.image.set_from_file(resource_filename("fbuploader",
+                                                   "data/fbuploader64.png"))
         
         if self.complete_photos == self.total_photos:
             self.dialog.response(gtk.RESPONSE_OK)
@@ -156,5 +189,5 @@ class UploadDialog(Dialog):
     
     @signal
     def on_upload_cancel_button_clicked(self, *args):
-        self.dialog.response(gtk.RESPONSE_CANCEL)
         self.uploader.abort()
+        self.dialog.response(gtk.RESPONSE_CANCEL)
