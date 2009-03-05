@@ -51,9 +51,12 @@ import urllib
 import urllib2
 import httplib
 import hashlib
+import logging
 import binascii
 import urlparse
 import mimetypes
+
+log = logging.getLogger(__name__)
 
 # try to use simplejson first, otherwise fallback to XML
 RESPONSE_FORMAT = 'JSON'
@@ -414,12 +417,14 @@ METHODS = {
             ('x', float, [('default', 50)]),
             ('y', float, [('default', 50)]),
             ('tags', str, ['optional']),
+            ('owner_uid', int, ['optional']),
         ],
 
         'createAlbum': [
             ('name', str, []),
             ('location', str, ['optional']),
             ('description', str, ['optional']),
+            
         ],
 
         'get': [
