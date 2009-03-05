@@ -31,8 +31,8 @@ class PhotoChooser(Dialog):
 
     def __init__(self):
         super(PhotoChooser, self).__init__("photochooser_dialog")
-        
         log.info("Initializing photochooser dialog.")
+        del self.tree
         
         # We want to be able to select multiple photos.
         self.dialog.set_select_multiple(True)
