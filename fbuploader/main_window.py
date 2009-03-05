@@ -376,12 +376,7 @@ class MainWindow(Window):
                 "width": width,
                 "height": height
             }
-
-        adder = PhotoAdder(self.photos_view)
-        adder.on("photo-added", on_photo_added)
-        for filename in self.photo_chooser.dialog.get_filenames():
-            adder.add(filename)
-        adder.start()
+        self.photos_view.add_photos(self.photo_chooser.dialog.get_filenames())
     
     @signal
     def on_photos_view_selection_changed(self, *args):

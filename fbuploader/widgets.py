@@ -23,7 +23,8 @@
 import os
 import gtk
 import logging
-from fbuploader.common import Events, get_session_dir
+from pkg_resources import resource_filename
+from fbuploader.common import Events, Thread, get_session_dir
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +38,9 @@ def scale_image(pixbuf, width=None, height=None):
     if cur_width >= width or cur_height >= height:
         # We need to do a resize
         pass
+
+loading_image = gtk.gdk.pixbuf_new_from_file(resource_filename(
+    "fbuploader", "data/fbuploader96.png"))
 
 class PhotoPreview(Events, gtk.EventBox):
     __gtype_name__ = "PhotoPreview"
@@ -109,19 +113,24 @@ class PhotoPreview(Events, gtk.EventBox):
         self.image.set_from_pixbuf(scaled_pixbuf)
         self.get_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.CROSSHAIR))
 
-class PhotoView(Events, gtk.IconView):
-    __gtype_name__ = "PhotoView"
+class PhotoAdder(Thread):
+    """
+    This class handles adding photos to the PhotoView. We want this to be 
+    threaded.
+    """
+    def __init__(self, photos_view, filename, load_only=False):
+        super(PhotoAdder, self).__init__()
+        self.model = photos_view.get_model()
+        self.queue_resize = photos_view.queue_resize
+        
+        self.load_only = load_only
+        self.filename = filename
     
-    def __init__(self, model=None):
-        photo_model = gtk.ListStore(str, str, gtk.gdk.Pixbuf)
-        super(PhotoView, self).__init__()
-        gtk.IconView.__init__(self, photo_model)
-        self.set_text_column(1)
-        self.set_pixbuf_column(2)
-        self.set_item_width(100)
-        self.connect("key-press-event", self.on_key_press_event)
+    def add(self, filename):
+        name = os.path.basename(filename)
+        return self.model.append((filename, name, loading_image))
     
-    def add_photo(self, filename):
+    def resize(self, filename):
         # Load the photo from the specified file
         pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
         
@@ -137,16 +146,21 @@ class PhotoView(Events, gtk.IconView):
             height = int(height / ratio)
             pixbuf = pixbuf.scale_simple(width, height,
                                          gtk.gdk.INTERP_BILINEAR)
-        
+
         # Save the possibly scaled pixbuf in the session directory
         filename = get_session_dir(os.path.basename(filename))
         if not os.path.isdir(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
         pixbuf.save(filename, "jpeg", {"quality": "95"})
-        self.load_photo(filename, pixbuf, (width, height))        
-        return filename, width, height
-
-    def load_photo(self, filename, pixbuf=None, size=None):
+        return pixbuf, filename, (width, height)
+    
+    def load(self, tree_iter, filename=None, pixbuf=None, size=None):
+        # Use the filename passed in if there is one
+        if filename:
+            self.model.set_value(tree_iter, 0, filename)
+        else:
+            filename = self.model.get_value(tree_iter, 0)
+        
         # Load the photo from the specified file or use the passed in pixbuf
         pixbuf = pixbuf or gtk.gdk.pixbuf_new_from_file(filename)
         
@@ -164,9 +178,68 @@ class PhotoView(Events, gtk.IconView):
             width, height = int(width / ratio), 100
 
         scaled = pixbuf.scale_simple(width, height, gtk.gdk.INTERP_HYPER)
-        del pixbuf
-        name = os.path.basename(filename)
-        self.get_model().append((filename, name, scaled))
+        self.model.set_value(tree_iter, 2, scaled)
+        self.queue_resize()
+        
+        del pixbuf, scaled
+        del width, height
+    
+    def run(self):
+        tree_iter = self.add(self.filename)
+        filename = None
+        pixbuf = None
+        size = None
+        if not self.load_only:
+            pixbuf, filename, size = self.resize(filename)
+        self.load(tree_iter, filename, pixbuf, size)
+
+class QueuedPhotoAdder(PhotoAdder):
+    def __init__(self, photos_view, load_only=False):
+        super(QueuedPhotoAdder, self).__init__(photos_view, None, load_only)
+        self.running = False
+        self.__queue = []
+    
+    def queue(self, *args):
+        self.__queue.extend(args)
+    
+    def run(self):
+        tree_iters = map(self.add, self.__queue)
+        for tree_iter in tree_iters:
+            pixbuf = None
+            size = None
+            if not self.load_only:
+                filename = self.model.get_value(tree_iter, 0)
+                pixbuf, filename, size = self.resize(filename)
+            self.load(tree_iter, filename, pixbuf, size)
+
+class PhotoView(Events, gtk.IconView):
+    __gtype_name__ = "PhotoView"
+    
+    def __init__(self, model=None):
+        photo_model = gtk.ListStore(str, str, gtk.gdk.Pixbuf)
+        super(PhotoView, self).__init__()
+        gtk.IconView.__init__(self, photo_model)
+        self.set_text_column(1)
+        self.set_pixbuf_column(2)
+        self.set_item_width(100)
+        self.connect("key-press-event", self.on_key_press_event)
+    
+    def add_photo(self, filename):
+        PhotoAdder(self, filename).start()
+    
+    def add_photos(self, filenames):
+        queued_adder = QueuedPhotoAdder(self)
+        queued_adder.queue(*filenames)
+        queued_adder.start()
+        self.queue_resize()
+
+    def load_photo(self, filename):
+        PhotoAdder(self, filename, True).start()
+    
+    def load_photos(self, filenames):
+        queued_adder = QueuedPhotoAdder(self, True)
+        queued_adder.queue(*filenames)
+        queued_adder.start()
         self.queue_resize()
     
     def on_key_press_event(self, iconview, event, *args):
