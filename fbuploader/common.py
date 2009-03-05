@@ -90,7 +90,6 @@ class Events(object):
     
     def __init__(self, *args, **kwargs):
         self.__events = {}
-        log.info("Initializing Events class")
     
     def on(self, event, callback):
         callbacks = self.__events.get(event, [])
