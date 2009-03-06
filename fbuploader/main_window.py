@@ -335,6 +335,16 @@ class MainWindow(Window):
         Autosave(self.on_autosave).start()
     
     @signal
+    def on_about_menuitem_activate(self, e):
+        def on_delete_event(dialog, *args):
+            dialog.hide()
+            return True
+        about_dialog = self.tree.get_widget("about_dialog")
+        about_dialog.connect("delete-event", on_delete_event)
+        about_dialog.run()
+        about_dialog.hide()
+    
+    @signal
     def on_albums_combobox_changed(self, e):
         index = self.albums_combobox.get_active()
         if not self.albums:

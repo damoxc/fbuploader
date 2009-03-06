@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.5 on Fri Mar  6 12:44:28 2009 -->
+<!--Generated with glade3 3.4.5 on Fri Mar  6 12:47:30 2009 -->
 <glade-interface>
   <widget class="GtkWindow" id="main_window">
     <property name="title" translatable="yes">Facebook PhotoUploader</property>
@@ -27,15 +27,17 @@
                     <child>
                       <widget class="GtkImageMenuItem" id="newalbum_menuitem">
                         <property name="visible">True</property>
-                        <property name="label">New Album</property>
+                        <property name="label">gtk-new</property>
                         <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
                       </widget>
                     </child>
                     <child>
                       <widget class="GtkImageMenuItem" id="refreshalbums_menuitem">
                         <property name="visible">True</property>
-                        <property name="label">Refresh Albums</property>
+                        <property name="label">gtk-refresh</property>
                         <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
                       </widget>
                     </child>
                     <child>
@@ -46,8 +48,9 @@
                     <child>
                       <widget class="GtkImageMenuItem" id="quit_menuitem">
                         <property name="visible">True</property>
-                        <property name="label">Quit</property>
+                        <property name="label">gtk-quit</property>
                         <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
                         <signal name="activate" handler="on_quit_menuitem_activate"/>
                       </widget>
                     </child>
@@ -66,8 +69,9 @@
                     <child>
                       <widget class="GtkImageMenuItem" id="preferences_menuitem">
                         <property name="visible">True</property>
-                        <property name="label">Preferences</property>
+                        <property name="label">gtk-preferences</property>
                         <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
                       </widget>
                     </child>
                   </widget>
@@ -85,8 +89,10 @@
                     <child>
                       <widget class="GtkImageMenuItem" id="about_menuitem">
                         <property name="visible">True</property>
-                        <property name="label">About</property>
+                        <property name="label">gtk-about</property>
                         <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="on_about_menuitem_activate"/>
                       </widget>
                     </child>
                   </widget>
