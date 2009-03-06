@@ -138,6 +138,7 @@ class MainWindow(Window):
         log.info("Initializing Main Window")
         super(MainWindow, self).__init__("main_window")
         self.facebook = facebook.Facebook(FB_API_KEY, FB_SECRET_KEY)
+        self.facebook.on("error", self.on_facebook_error)
         self.albums = []
         
         # Get widgets from the tree
@@ -321,6 +322,9 @@ class MainWindow(Window):
     def on_autosave(self):
         log.info("Autosaving session data")
         self.save()
+    
+    def on_facebook_error(self, error):
+        pass
     
     @signal
     def on_main_window_show(self, e):

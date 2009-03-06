@@ -56,6 +56,8 @@ import binascii
 import urlparse
 import mimetypes
 
+from fbuploader.common import Events
+
 log = logging.getLogger(__name__)
 
 # try to use simplejson first, otherwise fallback to XML
@@ -749,7 +751,7 @@ class PhotosProxy(PhotosProxy):
         return str(mimetypes.guess_type(filename)[0]) or 'application/octet-stream'
 
 
-class Facebook(object):
+class Facebook(Events):
     """
     Provides access to the Facebook API.
 
@@ -832,6 +834,7 @@ class Facebook(object):
         facebook.auth.getSession()
 
         """
+        super(Facebook, self).__init__()
         self.api_key = api_key
         self.secret_key = secret_key
         self.session_key = None
@@ -847,6 +850,8 @@ class Facebook(object):
         self.internal = internal
         self._friends = None
         self.proxy = proxy
+        self.queue = []
+        self.logged_in = False
         if facebook_url is None:
             self.facebook_url = FACEBOOK_URL
         else:
@@ -916,7 +921,9 @@ class Facebook(object):
     def _check_error(self, response):
         """Checks if the given Facebook response is an error, and then raises the appropriate exception."""
         if type(response) is dict and response.has_key('error_code'):
-            raise FacebookError(response['error_code'], response['error_msg'], response['request_args'])
+            e = FacebookError(response['error_code'], response['error_msg'], response['request_args'])
+            self.fire("error", e)
+            raise e
 
 
     def _build_post_args(self, method, args=None):
