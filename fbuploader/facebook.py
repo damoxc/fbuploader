@@ -100,8 +100,15 @@ try:
 
 except ImportError:
     def urlread(url, data=None):
-        res = urllib2.urlopen(url, data=data)
-        return res.read()
+        attempts = 0
+        while attempts < 3:
+            try:
+                res = urllib2.urlopen(url, data=data)
+                return res.read()
+            except:
+                attempts += 1
+                if attempts == 3:
+                    raise Exception("Unable to contact facebook")
     
 __all__ = ['Facebook']
 
