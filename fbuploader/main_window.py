@@ -238,8 +238,16 @@ class MainWindow(Window):
     def login(self):
         logged_in = MessageBox(buttons=gtk.BUTTONS_OK)
         logged_in.set_markup("Press OK once you have logged in.")
-        self.fb_token = self.facebook.auth.createToken()
-        self.facebook.login()
+        attempts = 0
+        while attempts < 3:
+            try:
+                self.fb_token = self.facebook.auth.createToken()
+                self.facebook.login()
+                break
+            except:
+                attempts += 1
+                if attempts == 3:
+                    raise Exception("Unable to contact Facebook")
         log.info("Logging in to Facebook")
         if logged_in.run() == gtk.RESPONSE_OK:
             logged_in.destroy()
