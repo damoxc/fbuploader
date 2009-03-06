@@ -168,7 +168,7 @@ class MainWindow(Window):
         
         # Add in the preview photo image widget
         self.preview_image = PhotoPreview()
-        self.tree.get_widget("preview_viewport").add(self.preview_image)
+        self.tree.get_widget("preview_vbox").pack_start(self.preview_image)
         self.preview_image.on("tag-event", self.on_photo_tag)
         
         # Initialize the fb_session variable
