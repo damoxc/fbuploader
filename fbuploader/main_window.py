@@ -33,6 +33,7 @@ import cPickle as pickle
 
 from fbuploader.common import *
 from fbuploader.friends_dialog import FriendsDialog
+from fbuploader.new_album_dialog import NewAlbumDialog
 from fbuploader.photochooser_dialog import PhotoChooser
 from fbuploader.upload_dialog import UploadDialog
 from fbuploader.widgets import PhotoView, PhotoPreview
@@ -190,6 +191,10 @@ class MainWindow(Window):
         # Initialize the upload_dialog variable that will contain the
         # upload dialog later.
         self.upload_dialog = None
+        
+        # Initialize the new_album_dialog variable that will contain the
+        # new album dialog later.
+        self.new_album_dialog = None
     
     def check_sessions(self):
         sessions = []
@@ -337,6 +342,13 @@ class MainWindow(Window):
         AlbumDownloader(self.facebook, self.on_got_albums).start()
         FriendsDownloader(self.facebook, self.on_got_friends).start()
         Autosave(self.on_autosave).start()
+    
+    ## Menu Handlers
+    @signal
+    def on_newalbum_menuitem_activate(self, *args):
+        if self.new_album_dialog is None:
+            self.new_album_dialog = NewAlbumDialog(self)
+        response = self.new_album_dialog.run()
     
     @signal
     def on_about_menuitem_activate(self, e):
