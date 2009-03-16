@@ -20,16 +20,35 @@
 # 	Boston, MA    02110-1301, USA.
 #
 
+import gtk
 import logging
 
-from fbuploader.common import Dialog
+from fbuploader.common import Dialog, signal
 
 log = logging.getLogger(__name__)
 
 class NewAlbumDialog(Dialog):
     def __init__(self, main_window):
         super(NewAlbumDialog, self).__init__("new_album_dialog")
-        self.main_window = main_window
+        self.name = self.tree.get_widget("album_name_entry")
+        self.location = self.tree.get_widget("album_location_entry")
+        self.description = self.tree.get_widget("album_description_entry")
+        del self.tree
+        self.facebook = main_window.facebook
+        self.refresh_albums = main_window.refresh_photo_albums
     
     def on_delete(self, *args):
         return super(NewAlbumDialog, self).on_delete(*args)
+    
+    @signal
+    def on_new_album_ok_button_clicked(self, *args):
+        name = self.name.get_text()
+        location = self.location.get_text() or None
+        description = self.description.get_text() or None
+        album = self.facebook.photos.createAlbum(name, location, description)
+        self.refresh_albums()
+        self.dialog.response(gtk.RESPONSE_OK)
+    
+    @signal
+    def on_new_album_cancel_button_clicked(self, *args):
+        self.on_delete()

@@ -42,44 +42,62 @@ class PhotoUploader(Thread):
         super(PhotoUploader, self).__init__()
         self.queue = []
         self.aid = aid
-        self.do_upload = facebook.photos.upload
+        self._upload = facebook.photos.upload
         self.add_tag = facebook.photos.addTag
         self.running = True
     
     def abort(self):
         self.running = False
     
+    def do_upload(self):
+        log.info("Uploading photo: %s", os.path.basename(self.photo))
+        
+        self.fire("before-upload", self.photo)
+        def cb_upload(count, chunk_size, total_size):
+            self.fire("upload", self.photo, count, chunk_size, total_size)
+            
+        try:
+            upload_info = self._upload(self.photo, self.aid,
+                                       self.photo_info.get("caption"),
+                                       callback=cb_upload)
+        except Exception, e:
+            log.error("Unable to upload photo to aid: %s" % self.aid)
+            log.exception(e)
+            self.do_upload()
+        else:
+            self.pid = str(upload_info["pid"])
+            self.do_tagging()
+    
+    def do_tagging(self):
+        def format_tag(tag):
+            tag_dict = {"x": float(tag[1]), "y": float(tag[2])}
+            if type(tag[0]) is int:
+                tag_dict["tag_uid"] = tag[0]
+            else:
+                tag_dict["tag_text"] = tag[0]
+            return tag_dict
+        
+        tags = map(format_tag, self.photo_info.get("tags", []))
+        if tags:
+            tags = simplejson.dumps(tags)
+            log.info("Tagging photo: %s", os.path.basename(self.photo))
+            self.fire("before-tag", self.photo)
+            log.debug("Running add_tag(%r, %r)", self.pid, tags)
+            try:
+                self.add_tag(self.pid, tags=tags)
+                self.fire("after-tag", self.photo)
+            except Exception, e:
+                log.error("Unable to tag photo with pid: %s" % self.pid)
+                log.exception(e)
+                self.do_tagging()
+    
     def run(self):
         while self.running:
             if not self.queue: break
-            photo, info = self.queue.pop(0)
-            name = os.path.basename(photo)
-            log.info("Uploading photo: %s", name)
             
-            self.fire("before-upload", photo)
-            def cb_upload(count, chunk_size, total_size):
-                self.fire("upload", photo, count, chunk_size, total_size)
-            upload_info = self.do_upload(photo, self.aid, info.get("caption"),
-                                         callback=cb_upload)
-            
-            pid = str(upload_info["pid"])
-            def format_tag(tag):
-                tag_dict = {"x": float(tag[1]), "y": float(tag[2])}
-                if type(tag[0]) is int:
-                    tag_dict["tag_uid"] = tag[0]
-                else:
-                    tag_dict["tag_text"] = tag[0]
-                return tag_dict
-            tags = map(format_tag, info.get("tags", []))
-            if tags:
-                tags = simplejson.dumps(tags)
-                log.info("Tagging photo: %s", name)
-                self.fire("before-tag", photo)
-                log.debug("Running add_tag(%r, %r)", pid, tags)
-                self.add_tag(pid, tags=tags)
-                self.fire("after-tag", photo)
-            
-            self.fire("after-upload", photo)
+            self.photo, self.photo_info = self.queue.pop(0)
+            self.do_upload()
+            self.fire("after-upload", self.photo)
     
     def upload(self, photo, info):
         self.queue.append((photo, info))

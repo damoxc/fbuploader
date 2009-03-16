@@ -433,7 +433,7 @@ METHODS = {
             ('name', str, []),
             ('location', str, ['optional']),
             ('description', str, ['optional']),
-            
+            ('visible', str, ['optional'])
         ],
 
         'get': [

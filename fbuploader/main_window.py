@@ -208,6 +208,10 @@ class MainWindow(Window):
         for album in albums:
             self.albums.remove(album)
             self.albums_combobox.remove_text(0)
+    
+    def refresh_photo_albums(self):
+        self.clear_photo_albums()
+        AlbumDownloader(self.facebook, self.on_got_albums).start()
         
     def get_signals(self):
         signals = super(MainWindow, self).get_signals()
@@ -339,7 +343,7 @@ class MainWindow(Window):
         else:
             create_new_session()
             self.login()
-        AlbumDownloader(self.facebook, self.on_got_albums).start()
+        self.refresh_photo_albums()
         FriendsDownloader(self.facebook, self.on_got_friends).start()
         Autosave(self.on_autosave).start()
     
@@ -349,6 +353,10 @@ class MainWindow(Window):
         if self.new_album_dialog is None:
             self.new_album_dialog = NewAlbumDialog(self)
         response = self.new_album_dialog.run()
+    
+    @signal
+    def on_refreshalbums_menuitem_activate(self, *args):
+        self.refresh_photo_albums()
     
     @signal
     def on_about_menuitem_activate(self, e):

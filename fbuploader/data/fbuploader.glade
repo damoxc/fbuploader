@@ -26,16 +26,30 @@
                     <property name="visible">True</property>
                     <child>
                       <widget class="GtkImageMenuItem" id="newalbum_menuitem">
-                        <property name="label">gtk-new</property>
+                        <property name="label">New Album</property>
                         <property name="visible">True</property>
-                        <property name="use_underline">True</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="on_newalbum_menuitem_activate"/>
+                        <child internal-child="image">
+                          <widget class="GtkImage" id="image2">
+                            <property name="visible">True</property>
+                            <property name="stock">gtk-new</property>
+                          </widget>
+                        </child>
                       </widget>
                     </child>
                     <child>
                       <widget class="GtkImageMenuItem" id="refreshalbums_menuitem">
-                        <property name="label">gtk-refresh</property>
+                        <property name="label">Refresh Albums</property>
                         <property name="visible">True</property>
-                        <property name="use_underline">True</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="on_refreshalbums_menuitem_activate"/>
+                        <child internal-child="image">
+                          <widget class="GtkImage" id="image1">
+                            <property name="visible">True</property>
+                            <property name="stock">gtk-refresh</property>
+                          </widget>
+                        </child>
                       </widget>
                     </child>
                     <child>
@@ -45,10 +59,16 @@
                     </child>
                     <child>
                       <widget class="GtkImageMenuItem" id="quit_menuitem">
-                        <property name="label">gtk-quit</property>
+                        <property name="label">Quit</property>
                         <property name="visible">True</property>
-                        <property name="use_underline">True</property>
+                        <property name="use_stock">False</property>
                         <signal name="activate" handler="on_quit_menuitem_activate"/>
+                        <child internal-child="image">
+                          <widget class="GtkImage" id="image3">
+                            <property name="visible">True</property>
+                            <property name="stock">gtk-quit</property>
+                          </widget>
+                        </child>
                       </widget>
                     </child>
                   </widget>
@@ -67,7 +87,6 @@
                       <widget class="GtkImageMenuItem" id="preferences_menuitem">
                         <property name="label">gtk-preferences</property>
                         <property name="visible">True</property>
-                        <property name="use_underline">True</property>
                       </widget>
                     </child>
                   </widget>
@@ -930,6 +949,8 @@ Yusuke Kamiyamane - &lt;yusuke.kamiyamane@gmail.com&gt;</property>
     <property name="title" translatable="yes">New Album</property>
     <property name="default_width">300</property>
     <property name="type_hint">normal</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="skip_pager_hint">True</property>
     <property name="has_separator">False</property>
     <child internal-child="vbox">
       <widget class="GtkVBox" id="new_album_vbox">
@@ -1037,6 +1058,7 @@ Yusuke Kamiyamane - &lt;yusuke.kamiyamane@gmail.com&gt;</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
+                <signal name="clicked" handler="on_new_album_cancel_button_clicked"/>
               </widget>
               <packing>
                 <property name="position">0</property>
@@ -1049,6 +1071,7 @@ Yusuke Kamiyamane - &lt;yusuke.kamiyamane@gmail.com&gt;</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
+                <signal name="clicked" handler="on_new_album_ok_button_clicked"/>
               </widget>
               <packing>
                 <property name="position">1</property>
