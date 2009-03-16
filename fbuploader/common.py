@@ -143,6 +143,12 @@ class Dialog(Window):
     def __init__(self, dialog_name, icon=None):
         super(Dialog, self).__init__(dialog_name, icon=icon)
         self.dialog = self.window
+        self.dialog.connect("delete-event", self.on_delete)
+    
+    def on_delete(self, *args):
+        self.dialog.response(gtk.RESPONSE_CANCEL)
+        self.dialog.hide()
+        return True
     
     def run(self):
         return self.dialog.run()
