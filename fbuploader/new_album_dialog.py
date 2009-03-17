@@ -48,6 +48,7 @@ class NewAlbumDialog(Dialog):
         album = self.facebook.photos.createAlbum(name, location, description)
         self.refresh_albums()
         self.dialog.response(gtk.RESPONSE_OK)
+        self.dialog.hide()
     
     @signal
     def on_new_album_cancel_button_clicked(self, *args):
