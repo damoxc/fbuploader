@@ -87,6 +87,8 @@
                       <widget class="GtkImageMenuItem" id="preferences_menuitem">
                         <property name="label">gtk-preferences</property>
                         <property name="visible">True</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
                       </widget>
                     </child>
                   </widget>
@@ -106,6 +108,7 @@
                         <property name="label">gtk-about</property>
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
                         <signal name="activate" handler="on_about_menuitem_activate"/>
                       </widget>
                     </child>
@@ -378,6 +381,7 @@
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="relief">none</property>
+                                    <signal name="clicked" handler="on_rotate_left_button_clicked"/>
                                     <child>
                                       <widget class="GtkImage" id="rotate_left">
                                         <property name="visible">True</property>
@@ -401,6 +405,7 @@
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="relief">none</property>
+                                    <signal name="clicked" handler="on_rotate_right_button_clicked"/>
                                     <child>
                                       <widget class="GtkImage" id="rotate_right">
                                         <property name="visible">True</property>

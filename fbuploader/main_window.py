@@ -23,6 +23,7 @@
 import os
 import gtk
 import time
+import Image
 import urllib
 import logging
 import facebook
@@ -420,7 +421,7 @@ class MainWindow(Window):
         model = self.photos_view.get_model()
         filename = model[selected][0]
         
-        info = self.photo_info.get(filename, {})        
+        info = self.photo_info.get(filename, {})      
         self.preview_image.set_from_file(filename)
         self.caption_entry.set_text(info.get("caption", ""))
         self.set_tags(info.get("tags", []))
@@ -440,6 +441,20 @@ class MainWindow(Window):
     def on_photos_view_delete_photo(self, photo):
         self.photos.remove(photo)
         del self.photo_info[photo]
+    
+    @signal
+    def on_rotate_left_button_clicked(self, *args):
+        img = Image.open(self.preview_image.filename)
+        out = img.rotate(90)
+        out.save(self.preview_image.filename, "JPEG")
+        self.preview_image.set_from_file(self.preview_image.filename)
+    
+    @signal
+    def on_rotate_right_button_clicked(self, *args):
+        img = Image.open(self.preview_image.filename)
+        out = img.rotate(270)
+        out.save(self.preview_image.filename, "JPEG")
+        self.preview_image.set_from_file(self.preview_image.filename)
     
     @signal
     def on_photo_tag(self, x, y, event):
