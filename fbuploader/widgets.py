@@ -28,16 +28,31 @@ from fbuploader.common import Events, Thread, get_session_dir
 
 log = logging.getLogger(__name__)
 
-def scale_image(pixbuf, width=None, height=None):
-    if width is None and height is None:
-        raise Exception("Neither height nor width has been specified")
+def scale_image(pixbuf, max_width=None, max_height=None):
+    width = pixbuf.get_width()
+    height = pixbuf.get_height()
     
-    cur_width = pixbuf.get_width()
-    cur_height = pixbuf.get_height()
+    if width <= max_width or height <= max_height:
+        # We don't need to do a resize
+        return pixbuf
     
-    if cur_width >= width or cur_height >= height:
-        # We need to do a resize
-        pass
+    # First stage to resize the picture by the largest dimension
+    if width > height:
+        ratio = width / float(max_width)
+        width, height = max_width, int(height / ratio)
+    else:
+        ratio = height / float(max_height)
+        width, height = int(width / ratio), max_height
+    
+    # Second stage to ensure that the smaller dimension isn't exceeding the
+    # maximum.
+    if width > max_width:
+        ratio = width / float(max_width)
+        width, height = max_width, int(height / ratio)
+    elif height > max_height:
+        ratio = height / float(max_height)
+        width, height = int(width / ratio), max_height
+    return pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
 
 loading_image = gtk.gdk.pixbuf_new_from_file(resource_filename(
     "fbuploader", "data/fbuploader64.png"))
@@ -164,25 +179,10 @@ class PhotoAdder(Thread):
         # Load the photo from the specified file or use the passed in pixbuf
         pixbuf = pixbuf or gtk.gdk.pixbuf_new_from_file(filename)
         
-        if size is not None:
-            width, height = size
-        else:
-            width, height = pixbuf.get_width(), pixbuf.get_height()
-        
-        # Scale the image to produce a thumbnail
-        if width > height:
-            ratio = width / 100.0
-            width, height = 100, int(height / ratio)
-        else:
-            ratio = height / 100.0
-            width, height = int(width / ratio), 100
-
-        scaled = pixbuf.scale_simple(width, height, gtk.gdk.INTERP_HYPER)
+        scaled = scale_image(pixbuf, 100, 100)
         self.model.set_value(tree_iter, 2, scaled)
         self.queue_resize()
-        
         del pixbuf, scaled
-        del width, height
     
     def run(self):
         tree_iter = self.add(self.filename)
@@ -224,6 +224,7 @@ class PhotoView(Events, gtk.IconView):
         self.set_text_column(1)
         self.set_pixbuf_column(2)
         self.set_item_width(100)
+        self.photos = {}
         self.connect("key-press-event", self.on_key_press_event)
     
     def add_photo(self, filename):
@@ -244,6 +245,15 @@ class PhotoView(Events, gtk.IconView):
         queued_adder.queue(*filenames)
         queued_adder.start()
         self.queue_resize()
+    
+    def reload_photo(self, filename):
+        model = self.get_model()
+        for photo in model:
+            if photo[0] != filename:
+                continue
+            pixbuf = gtk.gdk.pixbuf_new_from_file(filename)        
+            photo[2] = scale_image(pixbuf, 100, 100)
+            self.queue_resize()
     
     def on_photo_added(self, filename, width, height):
         self.fire("add-photo", filename, width, height)

@@ -444,17 +444,21 @@ class MainWindow(Window):
     
     @signal
     def on_rotate_left_button_clicked(self, *args):
-        img = Image.open(self.preview_image.filename)
+        filename = self.preview_image.filename
+        img = Image.open(filename)
         out = img.rotate(90)
-        out.save(self.preview_image.filename, "JPEG")
-        self.preview_image.set_from_file(self.preview_image.filename)
+        out.save(filename, "JPEG")
+        self.preview_image.set_from_file(filename)
+        self.photos_view.reload_photo(filename)
     
     @signal
     def on_rotate_right_button_clicked(self, *args):
-        img = Image.open(self.preview_image.filename)
+        filename = self.preview_image.filename
+        img = Image.open(filename)
         out = img.rotate(270)
-        out.save(self.preview_image.filename, "JPEG")
-        self.preview_image.set_from_file(self.preview_image.filename)
+        out.save(filename, "JPEG")
+        self.preview_image.set_from_file(filename)
+        self.photos_view.reload_photo(filename)
     
     @signal
     def on_photo_tag(self, x, y, event):
