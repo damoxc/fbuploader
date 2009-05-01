@@ -27,9 +27,11 @@ from fbuploader.common import Dialog, Events, signal
 
 class FriendsDialog(Dialog, Events):
     
+    window_name = 'friends_dialog'
+    
     def __init__(self, user_uid, friends):
         Events.__init__(self)
-        super(FriendsDialog, self).__init__('friends_dialog')
+        super(FriendsDialog, self).__init__()
         
         # Set up the dictionary of friends names and uids and the alphabetical
         # list.
@@ -42,10 +44,10 @@ class FriendsDialog(Dialog, Events):
         self.__recent_friends = {}
 
         # Get the required widgets as variables
-        self.friend_entry = self.tree.get_widget('friend_entry')
-        self.all_friends = self.tree.get_widget('allfriends_treeview')
-        self.all_friends_expander = self.tree.get_widget('allfriends_expander')
-        self.recent_friends = self.tree.get_widget('recentfriends_treeview')
+        self.friend_entry = self.builder.get_object('friend_entry')
+        self.all_friends = self.builder.get_object('allfriends_treeview')
+        self.all_friends_expander = self.builder.get_object('allfriends_expander')
+        self.recent_friends = self.builder.get_object('recentfriends_treeview')
 
         # Set up the friends treeviews
         for treeview in (self.all_friends, self.recent_friends):

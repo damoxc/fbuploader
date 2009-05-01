@@ -28,11 +28,13 @@ from fbuploader.common import Dialog, signal
 log = logging.getLogger(__name__)
 
 class PhotoChooser(Dialog):
+    
+    window_name = 'photochooser_dialog'
 
     def __init__(self):
-        super(PhotoChooser, self).__init__('photochooser_dialog')
+        super(PhotoChooser, self).__init__()
         log.info('Initializing photochooser dialog.')
-        del self.tree
+        del self.builder
         
         # We want to be able to select multiple photos.
         self.dialog.set_select_multiple(True)

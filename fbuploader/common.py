@@ -24,7 +24,7 @@ import os
 import time
 import logging
 import threading
-import gtk, gtk.glade
+import gtk
 import gtk.gdk
 import xdg, xdg.BaseDirectory
 from pkg_resources import resource_filename
@@ -32,20 +32,33 @@ from pkg_resources import resource_filename
 log = logging.getLogger(__name__)
 
 def signal(func):
+    """
+    Decorator that registers a function within a class as a signal handler
+    to allow for easier connecting of signals.
+    """
     func._signal = True
     return func
 
 session = None
 def create_new_session():
+    """
+    Creates a new session.
+    """
     return str(int(time.time()))
 
 def get_current_session():
+    """
+    Returns the current session, creating one if one doesn't exist.
+    """
     global session
     if session is None:
         session = create_new_session()
     return session
 
 def get_session_dir(filename=None):
+    """
+    Returns the directory that contains the sessions.
+    """
     if False:
         pass
     else:
@@ -57,10 +70,16 @@ def get_session_dir(filename=None):
             return folder
 
 def set_current_session(session_id):
+    """
+    Set the current session.
+    """
     global session
     session = session_id
 
 def get_config_dir(filename=None):
+    """
+    Return the configuration directory.
+    """
     if False:
         pass
     else:
@@ -98,7 +117,7 @@ class Events(object):
         self.__events[event] = callbacks
     
     def fire(self, event, *args):
-        log.debug('%s: firing %s', self.__class__, event)
+        log.debug('%s: firing %s', self.__class__.__name__, event)
         callbacks = self.__events.get(event, [])
         for callback in callbacks:
             callback(*args)
@@ -120,15 +139,19 @@ class EventThread(threading.Thread, Events):
 
 class Window(object):
 
-    glade_file = resource_filename('fbuploader', 'data/fbuploader.glade')
     icon = resource_filename('fbuploader', 'data/fbuploader64.png')
     
-    def __init__(self, window_name, icon=None, parent=None):
-        self.tree = gtk.glade.XML(self.glade_file)
-        self.window = self.tree.get_widget(window_name)
-        icon = icon or self.icon
-        self.window.set_icon_from_file(icon)
-        self.tree.signal_autoconnect(self.get_signals())
+    def __init__(self, parent=None):
+        self.builder = gtk.Builder()
+        self.builder.add_from_file(self.gtk_file)
+        self.window = self.builder.get_object(self.window_name)
+
+        self.window.set_icon_from_file(self.icon)
+        self.builder.connect_signals(self.get_signals())
+    
+    @property
+    def gtk_file(self):
+        return resource_filename('fbuploader','data/%s.gtk' % self.window_name)
     
     def get_signals(self):
         signals = {}
@@ -147,8 +170,8 @@ class Window(object):
 
 class Dialog(Window):
     
-    def __init__(self, dialog_name, icon=None):
-        super(Dialog, self).__init__(dialog_name, icon=icon)
+    def __init__(self, parent=None):
+        super(Dialog, self).__init__(parent=parent)
         self.dialog = self.window
         self.dialog.connect('delete-event', self.on_delete)
     

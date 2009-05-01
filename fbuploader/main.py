@@ -23,7 +23,7 @@
 import logging
 log = logging.getLogger(__name__)
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s,%(msecs)03d %(levelname)-5.5s [%(name)s:%(lineno)d] %(message)s',
     datefmt='%H:%M:%S',
     qualname='fbuploader'

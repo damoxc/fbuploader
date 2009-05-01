@@ -132,23 +132,25 @@ class PhotoAdder(EventThread):
 
 class MainWindow(Window):
 
+    window_name = 'main_window'
+    
     def __init__(self):
         log.info('Initializing Main Window')
-        super(MainWindow, self).__init__('main_window')
+        super(MainWindow, self).__init__()
         self.facebook = facebook.Facebook(FB_API_KEY, FB_SECRET_KEY)
         self.facebook.on('error', self.on_facebook_error)
         self.albums = []
         
-        # Get widgets from the tree
-        self.albums_combobox = self.tree.get_widget('albums_combobox')
-        self.album_cover = self.tree.get_widget('albumcover_image')
-        self.album_name = self.tree.get_widget('albumname_entry')
-        self.album_description = self.tree.get_widget('albumdescription_entry')
-        self.album_location = self.tree.get_widget('albumlocation_entry')
+        # Get widgets from the builder
+        self.albums_combobox = self.builder.get_object('albums_combobox')
+        self.album_cover = self.builder.get_object('albumcover_image')
+        self.album_name = self.builder.get_object('albumname_entry')
+        self.album_description = self.builder.get_object('albumdescription_entry')
+        self.album_location = self.builder.get_object('albumlocation_entry')
         
-        self.preview_image = self.tree.get_widget('preview_image')
-        self.caption_entry = self.tree.get_widget('caption_entry')
-        self.tags_entry = self.tree.get_widget('tags_entry')
+        self.preview_image = self.builder.get_object('preview_image')
+        self.caption_entry = self.builder.get_object('caption_entry')
+        self.tags_entry = self.builder.get_object('tags_entry')
         
         # Remove the first item in the combobox (left there so glade autocreates
         # a store)
@@ -161,12 +163,12 @@ class MainWindow(Window):
         self.photos_view = PhotoView()
         self.photos_view.connect('photo-added', self.on_photos_view_add_photo)
         self.photos_view.connect('photo-deleted', self.on_photos_view_delete_photo)
-        self.tree.get_widget('photos_scrolled').add(self.photos_view)
+        self.builder.get_object('photos_scrolled').add(self.photos_view)
         self.photos_view.connect('selection-changed', self.on_photos_view_selection_changed)
         
         # Add in the preview photo image widget
         self.preview_image = PhotoPreview()
-        self.tree.get_widget('preview_vbox').pack_start(self.preview_image)
+        self.builder.get_object('preview_vbox').pack_start(self.preview_image)
         self.preview_image.connect('tag-event', self.on_photo_tag)
         
         # Initialize the fb_session variable
@@ -388,6 +390,14 @@ class MainWindow(Window):
         album_cover_downloader.start()
 
     ## DND Stuff ##
+    @signal
+    def on_main_window_drag_drop(self, window, context, x, y, time):
+        pass
+    
+    @signal
+    def on_main_window_drag_motion(self, window, context, x, y, time):
+        pass
+    
     @signal
     def on_photos_iconview_drag_drop(self, iconview, context, x, y, time):
         context.finish(True, False, time)

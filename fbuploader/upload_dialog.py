@@ -104,17 +104,19 @@ class PhotoUploader(EventThread):
 
 class UploadDialog(Dialog):
     
+    window_name = 'upload_dialog'
+    
     def __init__(self, main_window):
-        super(UploadDialog, self).__init__('upload_dialog')
+        super(UploadDialog, self).__init__()
         log.info('Initializing upload dialog.')
         self.main_window = main_window
-        self.image = self.tree.get_widget('upload_image')
+        self.image = self.builder.get_object('upload_image')
         self.image.set_from_file(resource_filename('fbuploader',
                                                    'data/fbuploader64.png'))
-        self.total = self.tree.get_widget('upload_total')
-        self.total_progressbar = self.tree.get_widget('upload_total_progressbar')
-        self.current = self.tree.get_widget('upload_current')
-        self.current_progressbar = self.tree.get_widget('upload_current_progressbar')
+        self.total = self.builder.get_object('upload_total')
+        self.total_progressbar = self.builder.get_object('upload_total_progressbar')
+        self.current = self.builder.get_object('upload_current')
+        self.current_progressbar = self.builder.get_object('upload_current_progressbar')
     
     def run(self):
         aid = self.main_window.album['aid']
