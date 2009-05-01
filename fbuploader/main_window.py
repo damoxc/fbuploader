@@ -159,15 +159,15 @@ class MainWindow(Window):
         
         # Add in the photos view widget
         self.photos_view = PhotoView()
-        self.photos_view.on("add-photo", self.on_photos_view_add_photo)
-        self.photos_view.on("delete-photo", self.on_photos_view_delete_photo)
+        self.photos_view.connect("photo-added", self.on_photos_view_add_photo)
+        self.photos_view.connect("photo-deleted", self.on_photos_view_delete_photo)
         self.tree.get_widget("photos_scrolled").add(self.photos_view)
         self.photos_view.connect("selection-changed", self.on_photos_view_selection_changed)
         
         # Add in the preview photo image widget
         self.preview_image = PhotoPreview()
         self.tree.get_widget("preview_vbox").pack_start(self.preview_image)
-        self.preview_image.on("tag-event", self.on_photo_tag)
+        self.preview_image.connect("tag-event", self.on_photo_tag)
         
         # Initialize the fb_session variable
         self.fb_session = None
@@ -434,7 +434,7 @@ class MainWindow(Window):
         return True
     
     @signal
-    def on_photos_view_add_photo(self, filename, width, height):
+    def on_photos_view_add_photo(self, photoview, filename, width, height):
         log.info("Adding photo %s", os.path.basename(filename))
         log.debug("Full: %s", filename)
         self.photos.append(filename)
@@ -444,7 +444,7 @@ class MainWindow(Window):
         }
     
     @signal
-    def on_photos_view_delete_photo(self, photo):
+    def on_photos_view_delete_photo(self, photoview, photo):
         self.photos.remove(photo)
         del self.photo_info[photo]
     
@@ -467,7 +467,7 @@ class MainWindow(Window):
         self.photos_view.reload_photo(filename)
     
     @signal
-    def on_photo_tag(self, x, y, event):
+    def on_photo_tag(self, widget, x, y, event):
         x, y = int(round(x)), int(round(y))
         if self.friends_chooser is None:
             self.friends_chooser = FriendsDialog(self.facebook.uid,
