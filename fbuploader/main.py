@@ -33,7 +33,7 @@ def main():
     import gtk
     import gtk.gdk
     from fbuploader.main_window import MainWindow
-    log.info("Starting Main Window")
+    log.info('Starting Main Window')
     main_window = MainWindow()
     main_window.show()
     gtk.gdk.threads_init()

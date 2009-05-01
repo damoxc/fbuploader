@@ -41,8 +41,8 @@ from fbuploader.widgets import PhotoView, PhotoPreview
 
 log = logging.getLogger(__name__)
 
-FB_API_KEY = "a7b58c2702d421a270df42cfff9f4007"
-FB_SECRET_KEY = "a01ccd6ae703d353a701ea49f63b7667"
+FB_API_KEY = 'a7b58c2702d421a270df42cfff9f4007'
+FB_SECRET_KEY = 'a01ccd6ae703d353a701ea49f63b7667'
 
 class Autosave(EventThread):
     def __init__(self, interval=30):
@@ -64,7 +64,7 @@ class AlbumDownloader(EventThread):
         self.facebook = facebook
     
     def run(self):
-        log.info("Downloading photo albums")
+        log.info('Downloading photo albums')
         albums = self.facebook.photos.getAlbums()
         self.fire('downloaded', albums)
 
@@ -74,14 +74,14 @@ class FriendsDownloader(EventThread):
         self.facebook = facebook
     
     def run(self):
-        log.info("Downloading friends")
+        log.info('Downloading friends')
         friends = {}
         uids = self.facebook.friends.get()
         uids.append(self.facebook.uid)
-        log.info("Downloading friend information")
+        log.info('Downloading friend information')
         for friend in self.facebook.users.getInfo(uids):
-            friends[friend["name"]] = friend["uid"]
-            friends[friend["uid"]] = friend["name"]
+            friends[friend['name']] = friend['uid']
+            friends[friend['uid']] = friend['name']
         self.fire('downloaded', friends)
 
 class AlbumCoverDownloader(EventThread):
@@ -91,28 +91,28 @@ class AlbumCoverDownloader(EventThread):
         self.album = album
 
     def run(self):
-        if "cover_file" in self.album:
-            self.callback(self.album["cover_file"])
+        if 'cover_file' in self.album:
+            self.callback(self.album['cover_file'])
             return
 
-        log.info("Retreiving album cover photo")
-        cover_photo = self.facebook.photos.get(pids=self.album["cover_pid"])
+        log.info('Retreiving album cover photo')
+        cover_photo = self.facebook.photos.get(pids=self.album['cover_pid'])
         if cover_photo:
             cover_photo = cover_photo[0]
         else:
-            log.info("Album has no cover photo")
+            log.info('Album has no cover photo')
             return
 
-        data_dir = os.path.join(tempfile.gettempdir(), "fbuploader")
+        data_dir = os.path.join(tempfile.gettempdir(), 'fbuploader')
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
 
-        path = os.path.join(data_dir, os.path.basename(cover_photo["src"]))
+        path = os.path.join(data_dir, os.path.basename(cover_photo['src']))
         if not os.path.exists(path):
-            log.info("Downloading album cover photo")
-            urllib.urlretrieve(cover_photo["src"], path)
+            log.info('Downloading album cover photo')
+            urllib.urlretrieve(cover_photo['src'], path)
             
-        self.album["cover_file"] = path
+        self.album['cover_file'] = path
         self.fire('downloaded', path)
 
 class PhotoAdder(EventThread):
@@ -127,28 +127,28 @@ class PhotoAdder(EventThread):
     def run(self):
         for photo in self.photos:
             filename, width, height = self.photos_view.add_photo(photo)
-            self.fire("photo-added", filename, width, height)
+            self.fire('photo-added', filename, width, height)
 
 
 class MainWindow(Window):
 
     def __init__(self):
-        log.info("Initializing Main Window")
-        super(MainWindow, self).__init__("main_window")
+        log.info('Initializing Main Window')
+        super(MainWindow, self).__init__('main_window')
         self.facebook = facebook.Facebook(FB_API_KEY, FB_SECRET_KEY)
-        self.facebook.on("error", self.on_facebook_error)
+        self.facebook.on('error', self.on_facebook_error)
         self.albums = []
         
         # Get widgets from the tree
-        self.albums_combobox = self.tree.get_widget("albums_combobox")
-        self.album_cover = self.tree.get_widget("albumcover_image")
-        self.album_name = self.tree.get_widget("albumname_entry")
-        self.album_description = self.tree.get_widget("albumdescription_entry")
-        self.album_location = self.tree.get_widget("albumlocation_entry")
+        self.albums_combobox = self.tree.get_widget('albums_combobox')
+        self.album_cover = self.tree.get_widget('albumcover_image')
+        self.album_name = self.tree.get_widget('albumname_entry')
+        self.album_description = self.tree.get_widget('albumdescription_entry')
+        self.album_location = self.tree.get_widget('albumlocation_entry')
         
-        self.preview_image = self.tree.get_widget("preview_image")
-        self.caption_entry = self.tree.get_widget("caption_entry")
-        self.tags_entry = self.tree.get_widget("tags_entry")
+        self.preview_image = self.tree.get_widget('preview_image')
+        self.caption_entry = self.tree.get_widget('caption_entry')
+        self.tags_entry = self.tree.get_widget('tags_entry')
         
         # Remove the first item in the combobox (left there so glade autocreates
         # a store)
@@ -159,15 +159,15 @@ class MainWindow(Window):
         
         # Add in the photos view widget
         self.photos_view = PhotoView()
-        self.photos_view.connect("photo-added", self.on_photos_view_add_photo)
-        self.photos_view.connect("photo-deleted", self.on_photos_view_delete_photo)
-        self.tree.get_widget("photos_scrolled").add(self.photos_view)
-        self.photos_view.connect("selection-changed", self.on_photos_view_selection_changed)
+        self.photos_view.connect('photo-added', self.on_photos_view_add_photo)
+        self.photos_view.connect('photo-deleted', self.on_photos_view_delete_photo)
+        self.tree.get_widget('photos_scrolled').add(self.photos_view)
+        self.photos_view.connect('selection-changed', self.on_photos_view_selection_changed)
         
         # Add in the preview photo image widget
         self.preview_image = PhotoPreview()
-        self.tree.get_widget("preview_vbox").pack_start(self.preview_image)
-        self.preview_image.connect("tag-event", self.on_photo_tag)
+        self.tree.get_widget('preview_vbox').pack_start(self.preview_image)
+        self.preview_image.connect('tag-event', self.on_photo_tag)
         
         # Initialize the fb_session variable
         self.fb_session = None
@@ -214,70 +214,70 @@ class MainWindow(Window):
         
     def get_signals(self):
         signals = super(MainWindow, self).get_signals()
-        signals["on_main_window_event_after"] = self.quit
-        signals["on_quit_menuitem_activate"] = self.quit
-        signals["on_main_window_destroy"] = self.quit
+        signals['on_main_window_event_after'] = self.quit
+        signals['on_quit_menuitem_activate'] = self.quit
+        signals['on_main_window_destroy'] = self.quit
         return signals
     
     def load(self, session):
-        log.info("Loading session %s", session)
+        log.info('Loading session %s', session)
         try:
             set_current_session(session)
-            path = get_session_dir("data")
+            path = get_session_dir('data')
             if not os.path.exists(path):
                 log.error("Session data doesn't exist")
                 return
-            session = pickle.load(open(path, "rb"))
+            session = pickle.load(open(path, 'rb'))
         except:
-            log.error("Unable to load session %d", session)
+            log.error('Unable to load session %d', session)
             return
 
-        self.photos = session.get("photos")
-        self.photo_info = session.get("photo_info")
-        self.fb_session = session.get("fb_session")
+        self.photos = session.get('photos')
+        self.photo_info = session.get('photo_info')
+        self.fb_session = session.get('fb_session')
         
-        if self.fb_session["expires"] <= time.time():
+        if self.fb_session['expires'] <= time.time():
             self.login()
         else:
-            self.facebook.session_key = self.fb_session["session_key"]
+            self.facebook.session_key = self.fb_session['session_key']
             self.facebook.secret = FB_SECRET_KEY
-            self.facebook.uid = self.fb_session["uid"]
+            self.facebook.uid = self.fb_session['uid']
         self.photos_view.load_photos(self.photos)
     
     def login(self):
         logged_in = MessageBox(buttons=gtk.BUTTONS_OK)
-        logged_in.set_markup("Press OK once you have logged in.")
+        logged_in.set_markup('Press OK once you have logged in.')
         self.fb_token = self.facebook.auth.createToken()
         self.facebook.login()
-        log.info("Logging in to Facebook")
+        log.info('Logging in to Facebook')
         if logged_in.run() == gtk.RESPONSE_OK:
             logged_in.destroy()
             try:
                 self.fb_session = self.facebook.auth.getSession()
             except Exception, e:
-                log.error("Login failed")
+                log.error('Login failed')
             else:
-                log.info("Successfully logged in")
+                log.info('Successfully logged in')
         else:
-            log.error("Login failed")
+            log.error('Login failed')
     
     def save(self):
         session = {
-            "photos": self.photos,
-            "photo_info": self.photo_info,
-            "fb_session": self.fb_session
+            'photos': self.photos,
+            'photo_info': self.photo_info,
+            'fb_session': self.fb_session
         }
         try:
-            path = get_session_dir("data")
+            path = get_session_dir('data')
             if not os.path.isdir(os.path.dirname(path)):
                 os.makedirs(os.path.dirname(path))
-            pickle.dump(session, open(path, "wb"))
+            pickle.dump(session, open(path, 'wb'))
         except:
-            log.error("Unable to save session info")
+            log.error('Unable to save session info')
     
     def set_form_sensitive(self, sensitive=True):
-        action = sensitive and "Enabling" or "Disabling"
-        log.info("%s album form", action)
+        action = sensitive and 'Enabling' or 'Disabling'
+        log.info('%s album form', action)
         self.albums_combobox.set_sensitive(sensitive)
         self.album_cover.set_sensitive(sensitive)
         self.album_name.set_sensitive(sensitive)
@@ -291,10 +291,10 @@ class MainWindow(Window):
                 names.append(self.friends[tag[0]])
             else:
                 names.append(tag[0])
-        self.tags_entry.set_text("; ".join(names))
+        self.tags_entry.set_text('; '.join(names))
     
     def quit(self, *args):
-        log.info("Shutting down main window")
+        log.info('Shutting down main window')
         if self.photo_chooser is not None:
             self.photo_chooser.dialog.hide()
         if self.friends_chooser is not None:
@@ -316,8 +316,8 @@ class MainWindow(Window):
         self.clear_photo_albums()
         for album in albums:
             self.albums.append(album)
-            self.albums_combobox.append_text("%s (%d Photos)" % (album["name"],
-                                                                 album["size"]))
+            self.albums_combobox.append_text('%s (%d Photos)' % (album['name'],
+                                                                 album['size']))
         self.albums_combobox.set_active(0)
         self.set_form_sensitive(True)
     
@@ -328,7 +328,7 @@ class MainWindow(Window):
         self.album_cover.set_from_file(path)
     
     def on_autosave(self):
-        log.info("Autosaving session data")
+        log.info('Autosaving session data')
         self.save()
     
     def on_facebook_error(self, error):
@@ -367,8 +367,8 @@ class MainWindow(Window):
         def on_delete_event(dialog, *args):
             dialog.hide()
             return True
-        about_dialog = self.tree.get_widget("about_dialog")
-        about_dialog.connect("delete-event", on_delete_event)
+        about_dialog = self.tree.get_widget('about_dialog')
+        about_dialog.connect('delete-event', on_delete_event)
         about_dialog.run()
         about_dialog.hide()
     
@@ -379,9 +379,9 @@ class MainWindow(Window):
             return
         self.album_cover.set_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_DIALOG)
         album = self.albums[index]
-        self.album_name.set_text(album["name"])
-        self.album_description.set_text(album["description"])
-        self.album_location.set_text(album["location"])
+        self.album_name.set_text(album['name'])
+        self.album_description.set_text(album['description'])
+        self.album_location.set_text(album['location'])
         
         album_cover_downloader = AlbumCoverDownloader(self.facebook, album)
         album_cover_downloader.on('downloaded', self.on_got_albumcover)
@@ -420,7 +420,7 @@ class MainWindow(Window):
         # If there was a previous image, save the value in the caption field
         if self.preview_image.filename is not None:
             info = self.photo_info.get(self.preview_image.filename, {})
-            info["caption"] = self.caption_entry.get_text()
+            info['caption'] = self.caption_entry.get_text()
             self.photo_info[self.preview_image.filename] = info
         
         selected = selected[0]
@@ -429,18 +429,18 @@ class MainWindow(Window):
         
         info = self.photo_info.get(filename, {})      
         self.preview_image.set_from_file(filename)
-        self.caption_entry.set_text(info.get("caption", ""))
-        self.set_tags(info.get("tags", []))
+        self.caption_entry.set_text(info.get('caption', ''))
+        self.set_tags(info.get('tags', []))
         return True
     
     @signal
     def on_photos_view_add_photo(self, photoview, filename, width, height):
-        log.info("Adding photo %s", os.path.basename(filename))
-        log.debug("Full: %s", filename)
+        log.info('Adding photo %s', os.path.basename(filename))
+        log.debug('Full: %s', filename)
         self.photos.append(filename)
         self.photo_info[filename] = {
-            "width": width,
-            "height": height
+            'width': width,
+            'height': height
         }
     
     @signal
@@ -453,7 +453,7 @@ class MainWindow(Window):
         filename = self.preview_image.filename
         img = Image.open(filename)
         out = img.rotate(90)
-        out.save(filename, "JPEG")
+        out.save(filename, 'JPEG')
         self.preview_image.set_from_file(filename)
         self.photos_view.reload_photo(filename)
     
@@ -462,7 +462,7 @@ class MainWindow(Window):
         filename = self.preview_image.filename
         img = Image.open(filename)
         out = img.rotate(270)
-        out.save(filename, "JPEG")
+        out.save(filename, 'JPEG')
         self.preview_image.set_from_file(filename)
         self.photos_view.reload_photo(filename)
     
@@ -482,16 +482,16 @@ class MainWindow(Window):
             value = self.friends_chooser.uid
         
         info = self.photo_info.get(self.preview_image.filename, {})
-        tags = info.get("tags", [])
+        tags = info.get('tags', [])
         tags.append((value, x, y))
-        info["tags"] = tags
+        info['tags'] = tags
         self.set_tags(tags)
         self.photo_info[self.preview_image.filename] = info
     
     @signal
     def on_upload_button_clicked(self, *args):
         are_you_sure = MessageBox(buttons=gtk.BUTTONS_YES_NO)
-        are_you_sure.set_markup("Are you sure you wish to upload?")
+        are_you_sure.set_markup('Are you sure you wish to upload?')
         response = are_you_sure.run()
         are_you_sure.hide()
         if response != gtk.RESPONSE_YES:

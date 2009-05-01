@@ -22,15 +22,15 @@
 
 from setuptools import setup, find_packages
 
-setup(name="FBUploader",
-      version="0.1",
-      license="GPLv3",
-      description="Facebook photo uploader",
-      long_description="""""",
-      author="Damien Churchill",
-      author_email="damoxc@gmail.com",
-      packages=find_packages(exclude="tests"),
-      package_data={"fbuploader": ["data/*"]},
+setup(name='FBUploader',
+      version='0.1',
+      license='GPLv3',
+      description='Facebook photo uploader',
+      long_description='''''',
+      author='Damien Churchill',
+      author_email='damoxc@gmail.com',
+      packages=find_packages(exclude='tests'),
+      package_data={'fbuploader': ['data/*']},
       entry_points = """
       [console_scripts]
       fbuploader = fbuploader.main:main

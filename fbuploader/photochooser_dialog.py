@@ -30,8 +30,8 @@ log = logging.getLogger(__name__)
 class PhotoChooser(Dialog):
 
     def __init__(self):
-        super(PhotoChooser, self).__init__("photochooser_dialog")
-        log.info("Initializing photochooser dialog.")
+        super(PhotoChooser, self).__init__('photochooser_dialog')
+        log.info('Initializing photochooser dialog.')
         del self.tree
         
         # We want to be able to select multiple photos.
@@ -39,10 +39,10 @@ class PhotoChooser(Dialog):
         
         # We also only want photos displayed.
         photo_filter = gtk.FileFilter()
-        photo_filter.add_mime_type("image/gif")
-        photo_filter.add_mime_type("image/jpeg")
-        photo_filter.add_mime_type("image/tiff")
-        photo_filter.add_mime_type("image/png")
+        photo_filter.add_mime_type('image/gif')
+        photo_filter.add_mime_type('image/jpeg')
+        photo_filter.add_mime_type('image/tiff')
+        photo_filter.add_mime_type('image/png')
         self.dialog.set_filter(photo_filter)
     
     @signal

@@ -29,10 +29,10 @@ log = logging.getLogger(__name__)
 
 class NewAlbumDialog(Dialog):
     def __init__(self, main_window):
-        super(NewAlbumDialog, self).__init__("new_album_dialog")
-        self.name = self.tree.get_widget("album_name_entry")
-        self.location = self.tree.get_widget("album_location_entry")
-        self.description = self.tree.get_widget("album_description_entry")
+        super(NewAlbumDialog, self).__init__('new_album_dialog')
+        self.name = self.tree.get_widget('album_name_entry')
+        self.location = self.tree.get_widget('album_location_entry')
+        self.description = self.tree.get_widget('album_description_entry')
         del self.tree
         self.facebook = main_window.facebook
         self.refresh_albums = main_window.refresh_photo_albums

@@ -56,10 +56,10 @@ def scale_image(pixbuf, max_width=None, max_height=None):
     return pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
 
 loading_image = gtk.gdk.pixbuf_new_from_file(resource_filename(
-    "fbuploader", "data/fbuploader64.png"))
+    'fbuploader', 'data/fbuploader64.png'))
 
 class PhotoPreview(gtk.EventBox):
-    __gtype_name__ = "PhotoPreview"
+    __gtype_name__ = 'PhotoPreview'
     
     def __init__(self):
         super(PhotoPreview, self).__init__()
@@ -68,18 +68,18 @@ class PhotoPreview(gtk.EventBox):
         self.pixbuf = None
         self.is_resize = False
         self.filename = None
-        self.image.connect("size-allocate", self.on_image_size_allocate)
-        self.connect("button-press-event", self.on_button_press_event)
+        self.image.connect('size-allocate', self.on_image_size_allocate)
+        self.connect('button-press-event', self.on_button_press_event)
         
-        gobject.signal_new("tag-event", PhotoPreview, gobject.SIGNAL_RUN_LAST,
+        gobject.signal_new('tag-event', PhotoPreview, gobject.SIGNAL_RUN_LAST,
                            gobject.TYPE_NONE, ((gobject.TYPE_PYOBJECT,)*3))
     
     def _scale_image(self, allocation=None):
         allocation = allocation or self.image.get_allocation()
-        log.debug("Resizing image")
-        log.debug("Allocated size (%dx%d)", allocation.width, allocation.height)
+        log.debug('Resizing image')
+        log.debug('Allocated size (%dx%d)', allocation.width, allocation.height)
         width, height = self.pixbuf.get_width(), self.pixbuf.get_height()
-        log.debug("Image size (%dx%d)", width, height)
+        log.debug('Image size (%dx%d)', width, height)
         
         # First stage to resize the picture by the largest dimension
         if width > height:
@@ -89,7 +89,7 @@ class PhotoPreview(gtk.EventBox):
             ratio = height / float(allocation.height)
             width, height = int(width / ratio), allocation.height
         
-        log.debug("Scaled size run 1 (%dx%d)", width, height)
+        log.debug('Scaled size run 1 (%dx%d)', width, height)
         # Check to ensure that the smaller dimension isn't exceeding the 
         # widgets allocated space.
         if width > allocation.width:
@@ -98,7 +98,7 @@ class PhotoPreview(gtk.EventBox):
         elif height > allocation.height:
             ratio = height / float(allocation.height)
             width, height = int(width / ratio), allocation.height
-        log.debug("Scaled size run 2 (%dx%d)", width, height)
+        log.debug('Scaled size run 2 (%dx%d)', width, height)
         self.width, self.height = width, height
         return self.pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
     
@@ -112,7 +112,7 @@ class PhotoPreview(gtk.EventBox):
             self.is_resize = True
     
     def on_button_press_event(self, widget, event):
-        if not hasattr(self, "width"): return
+        if not hasattr(self, 'width'): return
         allocation = self.image.get_allocation()
         x, y = event.x, event.y
         if allocation.width == self.width:
@@ -121,7 +121,7 @@ class PhotoPreview(gtk.EventBox):
             x -= int((allocation.width - self.width) / 2.0)
         x = (x / self.width) * 100
         y = (y / self.height) * 100
-        self.emit("tag-event", x, y, event)
+        self.emit('tag-event', x, y, event)
 
     def set_from_file(self, filename):
         self.filename = filename
@@ -131,10 +131,10 @@ class PhotoPreview(gtk.EventBox):
         self.get_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.CROSSHAIR))
 
 class PhotoAdder(EventThread):
-    """
+    '''
     This class handles adding photos to the PhotoView. We want this to be 
     threaded.
-    """
+    '''
     def __init__(self, photos_view, filename, load_only=False):
         super(PhotoAdder, self).__init__()
         self.model = photos_view.get_model()
@@ -168,8 +168,8 @@ class PhotoAdder(EventThread):
         filename = get_session_dir(os.path.basename(filename))
         if not os.path.isdir(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
-        pixbuf.save(filename, "jpeg", {"quality": "95"})
-        self.fire("photo-added", filename, width, height)
+        pixbuf.save(filename, 'jpeg', {'quality': '95'})
+        self.fire('photo-added', filename, width, height)
         return pixbuf, filename, (width, height)
     
     def load(self, tree_iter, filename=None, pixbuf=None, size=None):
@@ -218,7 +218,7 @@ class QueuedPhotoAdder(PhotoAdder):
             self.load(tree_iter, filename, pixbuf, size)
 
 class PhotoView(gtk.IconView):
-    __gtype_name__ = "PhotoView"
+    __gtype_name__ = 'PhotoView'
     
     def __init__(self, model=None):
         photo_model = gtk.ListStore(str, str, gtk.gdk.Pixbuf)
@@ -227,12 +227,12 @@ class PhotoView(gtk.IconView):
         self.set_pixbuf_column(2)
         self.set_item_width(100)
         self.photos = {}
-        self.connect("key-press-event", self.on_key_press_event)
+        self.connect('key-press-event', self.on_key_press_event)
         
-        gobject.signal_new("photo-added", PhotoView,
+        gobject.signal_new('photo-added', PhotoView,
             gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
             (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,))
-        gobject.signal_new("photo-deleted", PhotoView,
+        gobject.signal_new('photo-deleted', PhotoView,
             gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
             (gobject.TYPE_PYOBJECT,))
     
@@ -241,7 +241,7 @@ class PhotoView(gtk.IconView):
     
     def add_photos(self, filenames):
         queued_adder = QueuedPhotoAdder(self)
-        queued_adder.on("photo-added", self.on_photo_added)
+        queued_adder.on('photo-added', self.on_photo_added)
         queued_adder.queue(*filenames)
         queued_adder.start()
         self.queue_resize()
@@ -266,7 +266,7 @@ class PhotoView(gtk.IconView):
     
     def on_photo_added(self, filename, width, height):
         self.emit('photo-added', filename, width, height)
-        #self.fire("add-photo", filename, width, height)
+        #self.fire('add-photo', filename, width, height)
     
     def on_key_press_event(self, iconview, event, *args):
         if event.keyval != 65535:
@@ -279,5 +279,5 @@ class PhotoView(gtk.IconView):
         filename = self.get_model().get(tree_iter, 0)[0]
         self.get_model().remove(tree_iter)
         self.select_path(selection[0])
-        #self.fire("delete-photo", filename)
+        #self.fire('delete-photo', filename)
         self.emit('photo-deleted', filename)

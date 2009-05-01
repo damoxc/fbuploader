@@ -29,7 +29,7 @@ class FriendsDialog(Dialog, Events):
     
     def __init__(self, user_uid, friends):
         Events.__init__(self)
-        super(FriendsDialog, self).__init__("friends_dialog")
+        super(FriendsDialog, self).__init__('friends_dialog')
         
         # Set up the dictionary of friends names and uids and the alphabetical
         # list.
@@ -42,26 +42,26 @@ class FriendsDialog(Dialog, Events):
         self.__recent_friends = {}
 
         # Get the required widgets as variables
-        self.friend_entry = self.tree.get_widget("friend_entry")
-        self.all_friends = self.tree.get_widget("allfriends_treeview")
-        self.all_friends_expander = self.tree.get_widget("allfriends_expander")
-        self.recent_friends = self.tree.get_widget("recentfriends_treeview")
+        self.friend_entry = self.tree.get_widget('friend_entry')
+        self.all_friends = self.tree.get_widget('allfriends_treeview')
+        self.all_friends_expander = self.tree.get_widget('allfriends_expander')
+        self.recent_friends = self.tree.get_widget('recentfriends_treeview')
 
         # Set up the friends treeviews
         for treeview in (self.all_friends, self.recent_friends):
             treeview.set_model(gtk.ListStore(int, str))
             renderer = gtk.CellRendererText()
-            column = gtk.TreeViewColumn("Friends", renderer)
-            column.add_attribute(renderer, "text", 1)
+            column = gtk.TreeViewColumn('Friends', renderer)
+            column.add_attribute(renderer, 'text', 1)
             treeview.append_column(column)
             treeview.set_headers_visible(False)
             selection = treeview.get_selection()
             selection.set_mode(gtk.SELECTION_SINGLE)
-            selection.connect("changed", self.on_selection_changed)
+            selection.connect('changed', self.on_selection_changed)
         self.filter_friends()
         
     
-    def filter_friends(self, filter_text=""):
+    def filter_friends(self, filter_text=''):
         # Add all the friends to the all friends treeview.
         model = self.all_friends.get_model()
         model.clear()
@@ -88,7 +88,7 @@ class FriendsDialog(Dialog, Events):
         response = self.dialog.run()
         
         # Begin tidy up so dialog will be fresh for the next run
-        self.friend_entry.set_text("")
+        self.friend_entry.set_text('')
         self.filter_friends()
         if self.all_friends_expander.get_expanded():
             self.all_friends_expander.set_expanded(False)

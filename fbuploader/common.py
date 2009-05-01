@@ -49,7 +49,7 @@ def get_session_dir(filename=None):
     if False:
         pass
     else:
-        folder = os.path.join(xdg.BaseDirectory.save_config_path("fbuploader"),
+        folder = os.path.join(xdg.BaseDirectory.save_config_path('fbuploader'),
                               get_current_session())
         if filename:
             return os.path.join(folder, filename)
@@ -64,7 +64,7 @@ def get_config_dir(filename=None):
     if False:
         pass
     else:
-        folder = xdg.BaseDirectory.save_config_path("fbuploader")
+        folder = xdg.BaseDirectory.save_config_path('fbuploader')
         if filename:
             return os.path.join(folder, filename)
         else:
@@ -120,8 +120,8 @@ class EventThread(threading.Thread, Events):
 
 class Window(object):
 
-    glade_file = resource_filename("fbuploader", "data/fbuploader.glade")
-    icon = resource_filename("fbuploader", "data/fbuploader64.png")
+    glade_file = resource_filename('fbuploader', 'data/fbuploader.glade')
+    icon = resource_filename('fbuploader', 'data/fbuploader64.png')
     
     def __init__(self, window_name, icon=None, parent=None):
         self.tree = gtk.glade.XML(self.glade_file)
@@ -133,10 +133,10 @@ class Window(object):
     def get_signals(self):
         signals = {}
         for attr in dir(self):
-            if attr[0] == "_":
+            if attr[0] == '_':
                 continue
             try:
-                if getattr(getattr(self, attr), "_signal", False):
+                if getattr(getattr(self, attr), '_signal', False):
                     signals[attr] = getattr(self, attr)
             except: pass
         return signals
@@ -150,7 +150,7 @@ class Dialog(Window):
     def __init__(self, dialog_name, icon=None):
         super(Dialog, self).__init__(dialog_name, icon=icon)
         self.dialog = self.window
-        self.dialog.connect("delete-event", self.on_delete)
+        self.dialog.connect('delete-event', self.on_delete)
     
     def on_delete(self, *args):
         self.dialog.response(gtk.RESPONSE_CANCEL)
@@ -165,14 +165,14 @@ class MessageBox(gtk.MessageDialog):
                  buttons=gtk.BUTTONS_NONE, message_format=None):
         super(MessageBox, self).__init__(parent, flags, type, buttons,
                                          message_format)
-        self.set_icon_from_file(resource_filename("fbuploader",
-                                                  "data/fbuploader64.png"))
+        self.set_icon_from_file(resource_filename('fbuploader',
+                                                  'data/fbuploader64.png'))
 
 __all__ = [
     # methods
-    "signal", "create_new_session", "get_current_session", "get_session_dir",
-    "set_current_session", "get_config_dir", "property",
+    'signal', 'create_new_session', 'get_current_session', 'get_session_dir',
+    'set_current_session', 'get_config_dir', 'property',
     
     # classes
-    "Dialog", "Events", "EventThread", "MessageBox", "Window"
+    'Dialog', 'Events', 'EventThread', 'MessageBox', 'Window'
 ]
