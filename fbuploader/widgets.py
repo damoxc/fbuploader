@@ -182,8 +182,10 @@ class PhotoAdder(EventThread):
         # Load the photo from the specified file or use the passed in pixbuf
         pixbuf = pixbuf or gtk.gdk.pixbuf_new_from_file(filename)
         
+        log.debug('Scaling')
         scaled = scale_image(pixbuf, 100, 100)
         self.model.set_value(tree_iter, 2, scaled)
+        log.debug('Resizing')
         self.queue_resize()
         del pixbuf, scaled
     
@@ -225,7 +227,7 @@ class PhotoView(gtk.IconView):
         super(PhotoView, self).__init__(photo_model)
         self.set_text_column(1)
         self.set_pixbuf_column(2)
-        self.set_item_width(100)
+        self.set_item_width(120)
         self.photos = {}
         self.connect('key-press-event', self.on_key_press_event)
         
@@ -237,9 +239,11 @@ class PhotoView(gtk.IconView):
             (gobject.TYPE_PYOBJECT,))
     
     def add_photo(self, filename):
+        log.debug('Adding photo')
         PhotoAdder(self, filename).start()
     
     def add_photos(self, filenames):
+        log.debug('Adding photos')
         queued_adder = QueuedPhotoAdder(self)
         queued_adder.on('photo-added', self.on_photo_added)
         queued_adder.queue(*filenames)
@@ -247,15 +251,18 @@ class PhotoView(gtk.IconView):
         self.queue_resize()
 
     def load_photo(self, filename):
+        log.debug('Loading photo')
         PhotoAdder(self, filename, True).start()
     
     def load_photos(self, filenames):
+        log.debug('Loading photos')
         queued_adder = QueuedPhotoAdder(self, True)
         queued_adder.queue(*filenames)
         queued_adder.start()
-        self.queue_resize()
+        #self.queue_resize()
     
     def reload_photo(self, filename):
+        log.debug('Reloading photo')
         model = self.get_model()
         for photo in model:
             if photo[0] != filename:
