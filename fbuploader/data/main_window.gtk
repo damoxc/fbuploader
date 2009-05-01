@@ -371,75 +371,97 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkViewport" id="preview_viewport">
+                  <object class="GtkFrame" id="preview_frame">
                     <property name="visible">True</property>
-                    <property name="resize_mode">queue</property>
-                    <property name="shadow_type">etched-in</property>
+                    <property name="label_xalign">0</property>
                     <child>
-                      <object class="GtkVBox" id="preview_vbox">
+                      <object class="GtkAlignment" id="preview_alignment">
                         <property name="visible">True</property>
-                        <property name="orientation">vertical</property>
+                        <property name="top_padding">5</property>
+                        <property name="bottom_padding">5</property>
+                        <property name="left_padding">5</property>
+                        <property name="right_padding">5</property>
                         <child>
-                          <object class="GtkToolbar" id="preview_toolbar">
+                          <object class="GtkVBox" id="preview_vbox">
                             <property name="visible">True</property>
+                            <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkToolItem" id="rotate_left_item">
+                              <object class="GtkViewport" id="preview_viewport">
                                 <property name="visible">True</property>
+                                <property name="resize_mode">queue</property>
+                                <property name="shadow_type">etched-in</property>
                                 <child>
-                                  <object class="GtkButton" id="rotate_left_button">
+                                  <object class="GtkToolbar" id="preview_toolbar">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="relief">none</property>
-                                    <signal name="clicked" handler="on_rotate_left_button_clicked"/>
                                     <child>
-                                      <object class="GtkImage" id="rotate_left">
+                                      <object class="GtkToolItem" id="rotate_left_item">
                                         <property name="visible">True</property>
-                                        <property name="pixbuf">arrow_turn_180_left.png</property>
+                                        <child>
+                                          <object class="GtkButton" id="rotate_left_button">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="relief">none</property>
+                                            <signal name="clicked" handler="on_rotate_left_button_clicked"/>
+                                            <child>
+                                              <object class="GtkImage" id="rotate_left">
+                                                <property name="visible">True</property>
+                                                <property name="pixbuf">arrow_turn_180_left.png</property>
+                                              </object>
+                                            </child>
+                                          </object>
+                                        </child>
                                       </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="homogeneous">True</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkToolItem" id="rotate_right_item">
+                                        <property name="visible">True</property>
+                                        <child>
+                                          <object class="GtkButton" id="rotate_right_button">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="relief">none</property>
+                                            <signal name="clicked" handler="on_rotate_right_button_clicked"/>
+                                            <child>
+                                              <object class="GtkImage" id="rotate_right">
+                                                <property name="visible">True</property>
+                                                <property name="pixbuf">arrow_turn.png</property>
+                                              </object>
+                                            </child>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="homogeneous">True</property>
+                                      </packing>
                                     </child>
                                   </object>
                                 </child>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
-                                <property name="homogeneous">True</property>
+                                <property name="fill">False</property>
+                                <property name="position">0</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkToolItem" id="rotate_right_item">
-                                <property name="visible">True</property>
-                                <child>
-                                  <object class="GtkButton" id="rotate_right_button">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="relief">none</property>
-                                    <signal name="clicked" handler="on_rotate_right_button_clicked"/>
-                                    <child>
-                                      <object class="GtkImage" id="rotate_right">
-                                        <property name="visible">True</property>
-                                        <property name="pixbuf">arrow_turn.png</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="homogeneous">True</property>
-                              </packing>
+                              <placeholder/>
                             </child>
                           </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="position">0</property>
-                          </packing>
                         </child>
-                        <child>
-                          <placeholder/>
-                        </child>
+                      </object>
+                    </child>
+                    <child type="label">
+                      <object class="GtkLabel" id="Preview">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">&lt;b&gt;Preview&lt;/b&gt;</property>
+                        <property name="use_markup">True</property>
                       </object>
                     </child>
                   </object>

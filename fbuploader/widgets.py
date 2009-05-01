@@ -58,22 +58,26 @@ def scale_image(pixbuf, max_width=None, max_height=None):
 loading_image = gtk.gdk.pixbuf_new_from_file(resource_filename(
     'fbuploader', 'data/fbuploader64.png'))
 
-class PhotoPreview(gtk.EventBox):
+class PhotoPreview(gtk.Viewport):
     __gtype_name__ = 'PhotoPreview'
     
     def __init__(self):
         super(PhotoPreview, self).__init__()
+        
         self.image = gtk.Image()
         self.add(self.image)
+        
         self.pixbuf = None
         self.is_resize = False
         self.filename = None
-        self.image.connect('size-allocate', self.on_image_size_allocate)
+        
+        self.connect('size-allocate', self.on_image_size_allocate)
         self.connect('button-press-event', self.on_button_press_event)
         
+        # Add an event for when the photo is "tagged" (clicked)
         gobject.signal_new('tag-event', PhotoPreview, gobject.SIGNAL_RUN_LAST,
                            gobject.TYPE_NONE, ((gobject.TYPE_PYOBJECT,)*3))
-    
+
     def _scale_image(self, allocation=None):
         allocation = allocation or self.image.get_allocation()
         log.debug('Resizing image')
@@ -102,11 +106,19 @@ class PhotoPreview(gtk.EventBox):
         self.width, self.height = width, height
         return self.pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
     
+    def set_from_file(self, filename):
+        self.filename = filename
+        self.pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
+        scaled_pixbuf = self._scale_image()
+        self.image.set_from_pixbuf(scaled_pixbuf)
+        self.get_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.CROSSHAIR))
+    
+    ## Event Handlers
     def on_image_size_allocate(self, *args):
         allocation = self.get_allocation()
         if self.pixbuf is None: return
         if self.is_resize:
-            #self.image.set_from_pixbuf(self._scale_image())
+            self.image.set_from_pixbuf(self._scale_image())
             self.is_resize = False
         else:
             self.is_resize = True
@@ -122,13 +134,6 @@ class PhotoPreview(gtk.EventBox):
         x = (x / self.width) * 100
         y = (y / self.height) * 100
         self.emit('tag-event', x, y, event)
-
-    def set_from_file(self, filename):
-        self.filename = filename
-        self.pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
-        scaled_pixbuf = self._scale_image()
-        self.image.set_from_pixbuf(scaled_pixbuf)
-        self.get_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.CROSSHAIR))
 
 class PhotoAdder(EventThread):
     '''
