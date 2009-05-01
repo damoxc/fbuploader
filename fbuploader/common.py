@@ -25,6 +25,7 @@ import time
 import logging
 import threading
 import gtk, gtk.glade
+import gtk.gdk
 import xdg, xdg.BaseDirectory
 from pkg_resources import resource_filename
 
@@ -97,6 +98,7 @@ class Events(object):
         self.__events[event] = callbacks
     
     def fire(self, event, *args):
+        log.debug('%s: firing %s', self.__class__, event)
         callbacks = self.__events.get(event, [])
         for callback in callbacks:
             callback(*args)
@@ -106,17 +108,22 @@ class Events(object):
         callbacks.remove(callback)
         self.__events[event] = callbacks
 
-class Thread(threading.Thread, Events):
+class EventThread(threading.Thread, Events):
     def __init__(self):
-        super(Thread, self).__init__()
+        super(EventThread, self).__init__()
         Events.__init__(self)
+    
+    def fire(self, event, *args):
+        gtk.gdk.threads_enter()
+        super(EventThread, self).fire(event, *args)
+        gtk.gdk.threads_leave()
 
 class Window(object):
 
     glade_file = resource_filename("fbuploader", "data/fbuploader.glade")
     icon = resource_filename("fbuploader", "data/fbuploader64.png")
     
-    def __init__(self, window_name, icon=None):
+    def __init__(self, window_name, icon=None, parent=None):
         self.tree = gtk.glade.XML(self.glade_file)
         self.window = self.tree.get_widget(window_name)
         icon = icon or self.icon
@@ -167,5 +174,5 @@ __all__ = [
     "set_current_session", "get_config_dir", "property",
     
     # classes
-    "Events", "Window", "Dialog", "MessageBox", "Thread"
+    "Dialog", "Events", "EventThread", "MessageBox", "Window"
 ]

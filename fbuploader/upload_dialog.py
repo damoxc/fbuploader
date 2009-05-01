@@ -26,7 +26,7 @@ import logging
 import threading
 from math import ceil
 from pkg_resources import resource_filename
-from fbuploader.common import Dialog, Thread, signal
+from fbuploader.common import Dialog, EventThread, signal
 
 try:
     import json as simplejson
@@ -36,7 +36,7 @@ except:
 
 log = logging.getLogger(__name__)
 
-class PhotoUploader(Thread):
+class PhotoUploader(EventThread):
 
     def __init__(self, facebook, aid):
         super(PhotoUploader, self).__init__()

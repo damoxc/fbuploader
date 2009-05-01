@@ -24,7 +24,7 @@ import os
 import gtk
 import logging
 from pkg_resources import resource_filename
-from fbuploader.common import Events, Thread, get_session_dir
+from fbuploader.common import Events, EventThread, get_session_dir
 
 log = logging.getLogger(__name__)
 
@@ -127,7 +127,7 @@ class PhotoPreview(Events, gtk.EventBox):
         self.image.set_from_pixbuf(scaled_pixbuf)
         self.get_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.CROSSHAIR))
 
-class PhotoAdder(Thread):
+class PhotoAdder(EventThread):
     """
     This class handles adding photos to the PhotoView. We want this to be 
     threaded.

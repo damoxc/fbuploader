@@ -44,10 +44,9 @@ log = logging.getLogger(__name__)
 FB_API_KEY = "a7b58c2702d421a270df42cfff9f4007"
 FB_SECRET_KEY = "a01ccd6ae703d353a701ea49f63b7667"
 
-class Autosave(threading.Thread):
-    def __init__(self, callback, interval=30):
+class Autosave(EventThread):
+    def __init__(self, interval=30):
         super(Autosave, self).__init__()
-        self.callback = callback
         self.interval = interval
         self.do_abort = False
     
@@ -56,24 +55,23 @@ class Autosave(threading.Thread):
     
     def run(self):
         while not self.do_abort:
-            self.callback()
+            self.fire('save')
             time.sleep(self.interval)
 
-class AlbumDownloader(threading.Thread):
-    def __init__(self, facebook, callback):
+class AlbumDownloader(EventThread):
+    def __init__(self, facebook):
         super(AlbumDownloader, self).__init__()
         self.facebook = facebook
-        self.callback = callback
     
     def run(self):
         log.info("Downloading photo albums")
-        self.callback(self.facebook.photos.getAlbums())
+        albums = self.facebook.photos.getAlbums()
+        self.fire('downloaded', albums)
 
-class FriendsDownloader(threading.Thread):
-    def __init__(self, facebook, callback):
+class FriendsDownloader(EventThread):
+    def __init__(self, facebook):
         super(FriendsDownloader, self).__init__()
         self.facebook = facebook
-        self.callback = callback
     
     def run(self):
         log.info("Downloading friends")
@@ -84,15 +82,13 @@ class FriendsDownloader(threading.Thread):
         for friend in self.facebook.users.getInfo(uids):
             friends[friend["name"]] = friend["uid"]
             friends[friend["uid"]] = friend["name"]
-        log.info("Running FriendsDownloader callback")
-        self.callback(friends)
+        self.fire('downloaded', friends)
 
-class AlbumCoverDownloader(threading.Thread):
-    def __init__(self, facebook, album, callback):
+class AlbumCoverDownloader(EventThread):
+    def __init__(self, facebook, album):
         super(AlbumCoverDownloader, self).__init__()
         self.facebook = facebook
         self.album = album
-        self.callback = callback
 
     def run(self):
         if "cover_file" in self.album:
@@ -117,9 +113,9 @@ class AlbumCoverDownloader(threading.Thread):
             urllib.urlretrieve(cover_photo["src"], path)
             
         self.album["cover_file"] = path
-        self.callback(path)
+        self.fire('downloaded', path)
 
-class PhotoAdder(Thread):
+class PhotoAdder(EventThread):
     def __init__(self, photos_view):
         super(PhotoAdder, self).__init__()
         self.photos_view = photos_view
@@ -212,7 +208,9 @@ class MainWindow(Window):
     
     def refresh_photo_albums(self):
         self.clear_photo_albums()
-        AlbumDownloader(self.facebook, self.on_got_albums).start()
+        album_downloader = AlbumDownloader(self.facebook)
+        album_downloader.on('downloaded', self.on_got_albums)
+        album_downloader.start()
         
     def get_signals(self):
         signals = super(MainWindow, self).get_signals()
@@ -345,8 +343,13 @@ class MainWindow(Window):
             create_new_session()
             self.login()
         self.refresh_photo_albums()
-        FriendsDownloader(self.facebook, self.on_got_friends).start()
-        Autosave(self.on_autosave).start()
+        friends_downloader = FriendsDownloader(self.facebook)
+        friends_downloader.on('downloaded', self.on_got_friends)
+        friends_downloader.start()
+        
+        autosave = Autosave()
+        autosave.on('save', self.on_autosave)
+        autosave.start()
     
     ## Menu Handlers
     @signal
@@ -379,7 +382,10 @@ class MainWindow(Window):
         self.album_name.set_text(album["name"])
         self.album_description.set_text(album["description"])
         self.album_location.set_text(album["location"])
-        AlbumCoverDownloader(self.facebook, album, self.on_got_albumcover).start()
+        
+        album_cover_downloader = AlbumCoverDownloader(self.facebook, album)
+        album_cover_downloader.on('downloaded', self.on_got_albumcover)
+        album_cover_downloader.start()
 
     ## DND Stuff ##
     @signal
