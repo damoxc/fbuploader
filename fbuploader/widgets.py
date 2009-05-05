@@ -23,6 +23,7 @@
 import os
 import gtk
 import cairo
+import urllib
 import gobject
 import logging
 from pkg_resources import resource_filename
@@ -312,10 +313,8 @@ class PhotoView(gtk.IconView):
     
     def add_photo_by_uri(self, uri):
         if uri.startswith('file://'):
-            if windows_check():
-                self.add_photo('\\'.join(uri[8:].split('/')))
-            else:
-                self.add_photo(uri[7:])
+            l = windows_check() and 8 or 7
+            self.add_photo(urllib.url2pathname(uri[l:]))
     
     def add_photos(self, filenames):
         log.debug('Adding photos')
@@ -326,11 +325,9 @@ class PhotoView(gtk.IconView):
     
     def add_photos_by_uri(self, uris):
         log.debug('Adding photos by uri')
-        if windows_check():
-            filenames = ['\\'.join(uri[8:].split('/')) for uri in uris if \
-                         uri.startswith('file://')]
-        else:
-            filenames = [uri[7:] for uri in uris if uri.startswith('file://')]
+        l = windows_check() and 8 or 7
+        filenames = [urllib.url2pathname(uri[l:]) for uri in uris if \
+                     uri.startswith('file://')]
         self.add_photos(filenames)
 
     def load_photo(self, filename):
