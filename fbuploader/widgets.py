@@ -316,7 +316,6 @@ class PhotoView(gtk.IconView):
     
     def on_photo_added(self, filename, width, height):
         self.emit('photo-added', filename, width, height)
-        #self.fire('add-photo', filename, width, height)
     
     def on_key_press_event(self, iconview, event, *args):
         if event.keyval != 65535:
@@ -329,5 +328,4 @@ class PhotoView(gtk.IconView):
         filename = self.get_model().get(tree_iter, 0)[0]
         self.get_model().remove(tree_iter)
         self.select_path(selection[0])
-        #self.fire('delete-photo', filename)
         self.emit('photo-deleted', filename)
