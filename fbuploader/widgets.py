@@ -132,28 +132,30 @@ class PhotoPreview(gtk.Viewport):
         x = (self.width / 100.0) * x
         y = (self.height / 100.0) * y
         
-        ctx.set_source_rgba(0.25, 0.25, 0.25, 0.75)
+        # Draw the frame
+        ctx.set_source_rgba(0.1, 0.1, 0.1, 0.8)
         ctx.set_line_width(max(ctx.device_to_user_distance(4.5, 4.5)))
         ctx.rectangle(x - 40, y - 40, 80, 80)
         ctx.stroke()
         
+        # If there's no name we don't need to draw the label.
         if not name:
             return
         
         # Set up the text
         ctx.set_font_size(10)
-        ctx.select_font_face("Sans", cairo.FONT_SLANT_NORMAL,
+        ctx.select_font_face("Bitstream Vera Sans", cairo.FONT_SLANT_NORMAL,
             cairo.FONT_WEIGHT_BOLD)
         x1, y1, width, height, x2, y2 = ctx.text_extents(name)
         
         # Draw the background
-        ctx.rectangle(x - 40, y - 63, width + 10, height + 10)
         ctx.set_source_rgba(0, 0, 0, 0.8)
+        ctx.rectangle(x - (width / 2.0) - 5, y - 63, width + 10, height + 10)
         ctx.fill()
         
         # Draw the text
-        ctx.move_to(x - 35, y - 50)
-        ctx.set_source_rgba(1, 1, 1, 0.9)
+        ctx.move_to(x - (width / 2.0), y - 50)
+        ctx.set_source_rgba(1, 1, 1, 1)
         ctx.show_text(name)
     
     def set_from_file(self, filename):
