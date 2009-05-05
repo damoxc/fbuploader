@@ -65,10 +65,6 @@ class PhotoPreview(gtk.Viewport):
     def __init__(self):
         super(PhotoPreview, self).__init__()
         
-        # Add an event for when the photo is "tagged" (clicked)
-        gobject.signal_new('tag-event', PhotoPreview, gobject.SIGNAL_RUN_LAST,
-                           gobject.TYPE_NONE, ((gobject.TYPE_PYOBJECT,)*3))
-        
         self.image = gtk.Image()
         self.add(self.image)
         
@@ -193,6 +189,10 @@ class PhotoPreview(gtk.Viewport):
         y = (y / self.height) * 100
         self.emit('tag-event', x, y, event)
 
+# Add an event for when the photo is "tagged" (clicked)
+gobject.signal_new('tag-event', PhotoPreview, gobject.SIGNAL_RUN_LAST,
+                   gobject.TYPE_NONE, ((gobject.TYPE_PYOBJECT,)*3))
+
 class PhotoAdder(EventThread):
     """
     This class handles adding photos to the PhotoView. We want this to be 
@@ -293,13 +293,6 @@ class PhotoView(gtk.IconView):
         self.set_item_width(120)
         self.photos = {}
         self.connect('key-press-event', self.on_key_press_event)
-        
-        gobject.signal_new('photo-added', PhotoView,
-            gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-            (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,))
-        gobject.signal_new('photo-deleted', PhotoView,
-            gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-            (gobject.TYPE_PYOBJECT,))
     
     def add_photo(self, filename):
         log.debug('Adding photo')
@@ -357,6 +350,13 @@ class PhotoView(gtk.IconView):
         self.select_path(selection[0])
         self.emit('photo-deleted', filename)
 
+gobject.signal_new('photo-added', PhotoView,
+    gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+    (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,))
+gobject.signal_new('photo-deleted', PhotoView,
+    gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+    (gobject.TYPE_PYOBJECT,))
+        
 class TagLabel(gtk.EventBox):
     
     __gtype_name__ = 'TagLabel'
@@ -374,13 +374,6 @@ class TagLabel(gtk.EventBox):
         self.set_tag(text)
         self.connect('enter-notify-event', self.on_enter_notify_event)
         self.connect('leave-notify-event', self.on_leave_notify_event)
-        
-        gobject.signal_new('enter', TagLabel,
-            gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-            [])
-        gobject.signal_new('leave', TagLabel,
-            gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-            [])
     
     def set_tag(self, text, underline=False):
         if underline:
@@ -418,3 +411,10 @@ class TagLabel(gtk.EventBox):
     def on_leave_notify_event(self, widget, event):
         self.set_tag(self.__text)
         self.emit('leave')
+
+gobject.signal_new('enter', TagLabel,
+    gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+    [])
+gobject.signal_new('leave', TagLabel,
+    gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+    [])
