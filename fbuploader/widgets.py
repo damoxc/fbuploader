@@ -64,6 +64,10 @@ class PhotoPreview(gtk.Viewport):
     def __init__(self):
         super(PhotoPreview, self).__init__()
         
+        # Add an event for when the photo is "tagged" (clicked)
+        gobject.signal_new('tag-event', PhotoPreview, gobject.SIGNAL_RUN_LAST,
+                           gobject.TYPE_NONE, ((gobject.TYPE_PYOBJECT,)*3))
+        
         self.image = gtk.Image()
         self.add(self.image)
         
@@ -74,9 +78,7 @@ class PhotoPreview(gtk.Viewport):
         self.connect('size-allocate', self.on_image_size_allocate)
         self.connect('button-press-event', self.on_button_press_event)
         
-        # Add an event for when the photo is "tagged" (clicked)
-        gobject.signal_new('tag-event', PhotoPreview, gobject.SIGNAL_RUN_LAST,
-                           gobject.TYPE_NONE, ((gobject.TYPE_PYOBJECT,)*3))
+        
 
     def _scale_image(self, allocation=None):
         allocation = allocation or self.image.get_allocation()
@@ -136,10 +138,10 @@ class PhotoPreview(gtk.Viewport):
         self.emit('tag-event', x, y, event)
 
 class PhotoAdder(EventThread):
-    '''
+    """
     This class handles adding photos to the PhotoView. We want this to be 
     threaded.
-    '''
+    """
     def __init__(self, photos_view, filename, load_only=False):
         super(PhotoAdder, self).__init__()
         self.model = photos_view.get_model()
@@ -247,13 +249,21 @@ class PhotoView(gtk.IconView):
         log.debug('Adding photo')
         PhotoAdder(self, filename).start()
     
+    def add_photo_by_uri(self, uri):
+        if uri.startswith('file://'):
+            self.add_photo(uri[7:])
+    
     def add_photos(self, filenames):
         log.debug('Adding photos')
         queued_adder = QueuedPhotoAdder(self)
         queued_adder.on('photo-added', self.on_photo_added)
         queued_adder.queue(*filenames)
         queued_adder.start()
-        self.queue_resize()
+    
+    def add_photos_by_uri(self, uris):
+        log.debug('Adding photos by uri')
+        filenames = [uri[7:] for uri in uris if uri.startswith('file://')]
+        self.add_photos(filenames)
 
     def load_photo(self, filename):
         log.debug('Loading photo')
@@ -264,7 +274,6 @@ class PhotoView(gtk.IconView):
         queued_adder = QueuedPhotoAdder(self, True)
         queued_adder.queue(*filenames)
         queued_adder.start()
-        #self.queue_resize()
     
     def reload_photo(self, filename):
         log.debug('Reloading photo')

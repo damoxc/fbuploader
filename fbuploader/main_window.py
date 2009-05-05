@@ -25,10 +25,10 @@ import gtk
 import time
 import Image
 import urllib
+import gtk.gdk
 import logging
 import facebook
 import tempfile
-import gtk.glade
 import threading
 import cPickle as pickle
 
@@ -152,8 +152,8 @@ class MainWindow(Window):
         self.caption_entry = self.builder.get_object('caption_entry')
         self.tags_entry = self.builder.get_object('tags_entry')
         
-        # Remove the first item in the combobox (left there so glade autocreates
-        # a store)
+        # Remove the first item in the combobox, for some reason GtkBuilder
+        # adds a blank item which we don't want there.
         self.albums_combobox.remove_text(0)
         
         # Disable the album form, we don't want it active until we have data.
@@ -165,6 +165,11 @@ class MainWindow(Window):
         self.photos_view.connect('photo-deleted', self.on_photos_view_delete_photo)
         self.builder.get_object('photos_scrolled').add(self.photos_view)
         self.photos_view.connect('selection-changed', self.on_photos_view_selection_changed)
+        
+        self.photos_view.drag_dest_set(gtk.DEST_DEFAULT_ALL,
+            [('text/uri-list', 0, 0)], gtk.gdk.ACTION_COPY)
+        self.photos_view.connect('drag-data-received',
+            self.on_photos_view_drag_data_received)
         
         # Add in the preview photo image widget
         self.preview_image = PhotoPreview()
@@ -391,21 +396,15 @@ class MainWindow(Window):
 
     ## DND Stuff ##
     @signal
-    def on_main_window_drag_drop(self, window, context, x, y, time):
-        pass
-    
-    @signal
-    def on_main_window_drag_motion(self, window, context, x, y, time):
-        pass
-    
-    @signal
     def on_photos_iconview_drag_drop(self, iconview, context, x, y, time):
         context.finish(True, False, time)
         return True
     
     @signal
-    def on_photos_iconview_drag_data_received(self, iconview, context, x, y,
+    def on_photos_view_drag_data_received(self, iconview, context, x, y,
                                               selection, info, time):
+        uris = [uri for uri in selection.data.split('\r\n')[:-1]]
+        self.photos_view.add_photos_by_uri(uris)
         return True
 
     @signal
