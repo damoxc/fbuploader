@@ -64,6 +64,7 @@ class PhotoPreview(gtk.Viewport):
     
     def __init__(self):
         super(PhotoPreview, self).__init__()
+        self.set_shadow_type(gtk.SHADOW_NONE)
         
         self.image = gtk.Image()
         self.add(self.image)

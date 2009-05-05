@@ -375,7 +375,6 @@
                     <child>
                       <object class="GtkAlignment" id="preview_alignment">
                         <property name="visible">True</property>
-                        <property name="top_padding">5</property>
                         <property name="bottom_padding">5</property>
                         <property name="left_padding">5</property>
                         <property name="right_padding">5</property>
@@ -384,62 +383,55 @@
                             <property name="visible">True</property>
                             <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkViewport" id="preview_viewport">
+                              <object class="GtkToolbar" id="preview_toolbar">
                                 <property name="visible">True</property>
-                                <property name="resize_mode">queue</property>
-                                <property name="shadow_type">etched-in</property>
                                 <child>
-                                  <object class="GtkToolbar" id="preview_toolbar">
+                                  <object class="GtkToolItem" id="rotate_left_item">
                                     <property name="visible">True</property>
                                     <child>
-                                      <object class="GtkToolItem" id="rotate_left_item">
+                                      <object class="GtkButton" id="rotate_left_button">
                                         <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="relief">none</property>
+                                        <signal name="clicked" handler="on_rotate_left_button_clicked"/>
                                         <child>
-                                          <object class="GtkButton" id="rotate_left_button">
+                                          <object class="GtkImage" id="rotate_left">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="receives_default">True</property>
-                                            <property name="relief">none</property>
-                                            <signal name="clicked" handler="on_rotate_left_button_clicked"/>
-                                            <child>
-                                              <object class="GtkImage" id="rotate_left">
-                                                <property name="visible">True</property>
-                                                <property name="pixbuf">arrow_turn_180_left.png</property>
-                                              </object>
-                                            </child>
+                                            <property name="pixbuf">arrow_turn_180_left.png</property>
                                           </object>
                                         </child>
                                       </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="homogeneous">True</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkToolItem" id="rotate_right_item">
-                                        <property name="visible">True</property>
-                                        <child>
-                                          <object class="GtkButton" id="rotate_right_button">
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="receives_default">True</property>
-                                            <property name="relief">none</property>
-                                            <signal name="clicked" handler="on_rotate_right_button_clicked"/>
-                                            <child>
-                                              <object class="GtkImage" id="rotate_right">
-                                                <property name="visible">True</property>
-                                                <property name="pixbuf">arrow_turn.png</property>
-                                              </object>
-                                            </child>
-                                          </object>
-                                        </child>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="homogeneous">True</property>
-                                      </packing>
                                     </child>
                                   </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="homogeneous">True</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkToolItem" id="rotate_right_item">
+                                    <property name="visible">True</property>
+                                    <child>
+                                      <object class="GtkButton" id="rotate_right_button">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="relief">none</property>
+                                        <signal name="clicked" handler="on_rotate_right_button_clicked"/>
+                                        <child>
+                                          <object class="GtkImage" id="rotate_right">
+                                            <property name="visible">True</property>
+                                            <property name="pixbuf">arrow_turn.png</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="homogeneous">True</property>
+                                  </packing>
                                 </child>
                               </object>
                               <packing>
@@ -581,17 +573,15 @@
       </object>
     </child>
   </object>
-  <object class="GtkImage" id="image2">
-    <property name="visible">True</property>
-    <property name="stock">gtk-new</property>
-  </object>
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
     <property name="stock">gtk-refresh</property>
+    <property name="icon-size">1</property>
   </object>
   <object class="GtkImage" id="image3">
     <property name="visible">True</property>
     <property name="stock">gtk-quit</property>
+    <property name="icon-size">1</property>
   </object>
   <object class="GtkAccelGroup" id="accelgroup1"/>
   <object class="GtkListStore" id="album_liststore">
@@ -604,5 +594,10 @@
         <col id="0" translatable="yes"> </col>
       </row>
     </data>
+  </object>
+  <object class="GtkImage" id="image2">
+    <property name="visible">True</property>
+    <property name="stock">gtk-new</property>
+    <property name="icon-size">1</property>
   </object>
 </interface>
