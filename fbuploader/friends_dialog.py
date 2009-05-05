@@ -56,7 +56,6 @@ class FriendsDialog(Dialog, Events):
             column = gtk.TreeViewColumn('Friends', renderer)
             column.add_attribute(renderer, 'text', 1)
             treeview.append_column(column)
-            treeview.set_headers_visible(False)
             selection = treeview.get_selection()
             selection.set_mode(gtk.SELECTION_SINGLE)
             selection.connect('changed', self.on_selection_changed)

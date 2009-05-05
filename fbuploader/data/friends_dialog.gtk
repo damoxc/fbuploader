@@ -45,6 +45,7 @@
                   <object class="GtkTreeView" id="allfriends_treeview">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <property name="headers_visible">False</property>
                     <signal name="row_activated" handler="on_allfriends_treeview_row_activated"/>
                   </object>
                 </child>
@@ -84,6 +85,7 @@
                       <object class="GtkTreeView" id="recentfriends_treeview">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="headers_visible">False</property>
                         <signal name="row_activated" handler="on_recentfriends_treeview_row_activated"/>
                       </object>
                     </child>
