@@ -156,9 +156,6 @@ class MainWindow(Window):
         # adds a blank item which we don't want there.
         self.albums_combobox.remove_text(0)
         
-        # Disable the album form, we don't want it active until we have data.
-        self.set_form_sensitive(False)
-        
         # Add in the photos view widget
         self.photos_view = PhotoView()
         self.photos_view.connect('photo-added', self.on_photos_view_add_photo)
@@ -175,6 +172,9 @@ class MainWindow(Window):
         self.preview_image = PhotoPreview()
         self.builder.get_object('preview_vbox').pack_start(self.preview_image)
         self.preview_image.connect('tag-event', self.on_photo_tag)
+        
+        # Disable the UI, we don't want it active until we have data.
+        self.set_sensitive(False)
         
         # Initialize the fb_session variable
         self.fb_session = None
@@ -206,6 +206,12 @@ class MainWindow(Window):
             if os.path.isdir(os.path.join(get_config_dir(), item)):
                 sessions.append(item)
         return sessions
+    
+    def check(self):
+        """
+        Checks to see if we have the required information to begin functioning
+        """
+        return not self.albums or hasattr(self, 'friends')
     
     def clear_photo_albums(self):
         albums = self.albums[:]
@@ -282,9 +288,15 @@ class MainWindow(Window):
         except:
             log.error('Unable to save session info')
     
-    def set_form_sensitive(self, sensitive=True):
+    def set_sensitive(self, sensitive=True):
         action = sensitive and 'Enabling' or 'Disabling'
-        log.info('%s album form', action)
+        log.info('%s user interface', action)
+        
+        # Photos stuff
+        self.photos_view.set_sensitive(sensitive)
+        self.preview_image.set_sensitive(sensitive)
+        
+        # Album Form
         self.albums_combobox.set_sensitive(sensitive)
         self.album_cover.set_sensitive(sensitive)
         self.album_name.set_sensitive(sensitive)
@@ -326,10 +338,14 @@ class MainWindow(Window):
             self.albums_combobox.append_text('%s (%d Photos)' % (album['name'],
                                                                  album['size']))
         self.albums_combobox.set_active(0)
-        self.set_form_sensitive(True)
+        
+        if self.check():
+            self.set_sensitive(True)
     
     def on_got_friends(self, friends):
         self.friends = friends
+        if self.check():
+            self.set_sensitive(True)
     
     def on_got_albumcover(self, path):
         self.album_cover.set_from_file(path)
