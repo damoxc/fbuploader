@@ -10,8 +10,6 @@
       <group name="accelgroup1"/>
     </accel-groups>
     <signal name="destroy" handler="on_main_window_destroy"/>
-    <signal name="drag_motion" handler="on_main_window_drag_motion"/>
-    <signal name="drag_drop" handler="on_main_window_drag_drop"/>
     <signal name="show" handler="on_main_window_show"/>
     <child>
       <object class="GtkVBox" id="vbox1">
