@@ -77,8 +77,6 @@ class PhotoPreview(gtk.Viewport):
         
         self.connect('size-allocate', self.on_image_size_allocate)
         self.connect('button-press-event', self.on_button_press_event)
-        
-        
 
     def _scale_image(self, allocation=None):
         allocation = allocation or self.image.get_allocation()
@@ -108,7 +106,38 @@ class PhotoPreview(gtk.Viewport):
         self.width, self.height = width, height
         return self.pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
     
+    def clear_tag(self):
+        """
+        Clears any displayed tags on the photo
+        """
+        scaled_pixbuf = self._scale_image()
+        self.image.set_from_pixbuf(scaled_pixbuf)
+
+    def display_tag(self, name, x, y):
+        """
+        Display a tag on the photo.
+        
+        :param name: str, The name to display alongside the tag.
+        :param x: int, The percentage to the tag, x dimension.
+        :param y: int, The percentage to the tag, y dimension.
+        """
+        ctx = self.image.window.cairo_create()
+        allocation = self.image.get_allocation()
+        
+        x = (allocation.width / 100.0) * x
+        y = (allocation.height / 100.0) * y
+        
+        ctx.set_source_rgba(0.25, 0.25, 0.25, 0.75)
+        ctx.set_line_width(max(ctx.device_to_user_distance(4.5, 4.5)))
+        ctx.rectangle(x - 40, y - 40, 80, 80)
+        ctx.stroke()
+    
     def set_from_file(self, filename):
+        """
+        Set the photo to display in the preview.
+        
+        :param filename: str, The filename of the photo to load.
+        """
         self.filename = filename
         self.pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
         scaled_pixbuf = self._scale_image()

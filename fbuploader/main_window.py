@@ -478,11 +478,13 @@ class MainWindow(Window):
     @signal
     def on_photo_tag(self, widget, x, y, event):
         x, y = int(round(x)), int(round(y))
+        self.preview_image.display_tag('', x, y)
         if self.friends_chooser is None:
             self.friends_chooser = FriendsDialog(self.facebook.uid,
                                                  self.friends)
         self.friends_chooser.dialog.set_position(gtk.WIN_POS_MOUSE)
         if self.friends_chooser.run() != gtk.RESPONSE_OK:
+            self.preview_image.clear_tag()
             return True
         
         if self.friends_chooser.uid == -1:
