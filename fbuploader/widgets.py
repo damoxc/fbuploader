@@ -22,6 +22,7 @@
 
 import os
 import gtk
+import cairo
 import gobject
 import logging
 from pkg_resources import resource_filename
@@ -121,16 +122,42 @@ class PhotoPreview(gtk.Viewport):
         :param x: int, The percentage to the tag, x dimension.
         :param y: int, The percentage to the tag, y dimension.
         """
+        
+        log.debug('Display tag (%r, %r, %r)', name, x, y)
         ctx = self.image.window.cairo_create()
         allocation = self.image.get_allocation()
         
-        x = (allocation.width / 100.0) * x
-        y = (allocation.height / 100.0) * y
+        if allocation.width == self.width:
+            ctx.translate(0, (allocation.height - self.height) / 2.0)
+        elif allocation.height == self.height:
+            ctx.translate((allocation.width - self.width) / 2.0, 0)
+
+        x = (self.width / 100.0) * x
+        y = (self.height / 100.0) * y
         
         ctx.set_source_rgba(0.25, 0.25, 0.25, 0.75)
         ctx.set_line_width(max(ctx.device_to_user_distance(4.5, 4.5)))
         ctx.rectangle(x - 40, y - 40, 80, 80)
         ctx.stroke()
+        
+        if not name:
+            return
+        
+        # Set up the text
+        ctx.set_font_size(10)
+        ctx.select_font_face("Sans", cairo.FONT_SLANT_NORMAL,
+            cairo.FONT_WEIGHT_BOLD)
+        x1, y1, width, height, x2, y2 = ctx.text_extents(name)
+        
+        # Draw the background
+        ctx.rectangle(x - 40, y - 63, width + 10, height + 10)
+        ctx.set_source_rgba(0, 0, 0, 0.8)
+        ctx.fill()
+        
+        # Draw the text
+        ctx.move_to(x - 35, y - 50)
+        ctx.set_source_rgba(1, 1, 1, 0.9)
+        ctx.show_text(name)
     
     def set_from_file(self, filename):
         """
@@ -329,3 +356,65 @@ class PhotoView(gtk.IconView):
         self.get_model().remove(tree_iter)
         self.select_path(selection[0])
         self.emit('photo-deleted', filename)
+
+class TagLabel(gtk.EventBox):
+    
+    __gtype_name__ = 'TagLabel'
+    
+    def __init__(self, text, uid, x, y):
+        super(TagLabel, self).__init__()
+        self.__uid = uid
+        self.__x = x
+        self.__y = y
+        self.__text = text
+        
+        self.__label = gtk.Label()
+        self.add(self.__label)
+        
+        self.set_tag(text)
+        self.connect('enter-notify-event', self.on_enter_notify_event)
+        self.connect('leave-notify-event', self.on_leave_notify_event)
+        
+        gobject.signal_new('enter', TagLabel,
+            gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+            [])
+        gobject.signal_new('leave', TagLabel,
+            gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+            [])
+    
+    def set_tag(self, text, underline=False):
+        if underline:
+            markup = '<span foreground="blue"><u>%s</u></span>' % text
+        else:
+            markup = '<span foreground="blue">%s</span>' % text
+        log.debug('Setting markup to: %r', markup)
+        self.__label.set_markup(markup)
+    
+    @property
+    def label(self):
+        return self.__label
+    
+    @property
+    def text(self):
+        return self.__text
+    
+    @property
+    def uid(self):
+        return self.__uid
+    
+    @property
+    def x(self):
+        return self.__x
+    
+    @property
+    def y(self):
+        return self.__y
+    
+    def on_enter_notify_event(self, widget, event):
+        self.set_tag(self.__text, True)
+        self.get_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
+        self.emit('enter')
+    
+    def on_leave_notify_event(self, widget, event):
+        self.set_tag(self.__text)
+        self.emit('leave')

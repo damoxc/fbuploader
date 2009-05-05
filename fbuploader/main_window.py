@@ -37,7 +37,7 @@ from fbuploader.friends_dialog import FriendsDialog
 from fbuploader.new_album_dialog import NewAlbumDialog
 from fbuploader.photochooser_dialog import PhotoChooser
 from fbuploader.upload_dialog import UploadDialog
-from fbuploader.widgets import PhotoView, PhotoPreview
+from fbuploader.widgets import PhotoView, PhotoPreview, TagLabel
 
 log = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ class MainWindow(Window):
         
         self.preview_image = self.builder.get_object('preview_image')
         self.caption_entry = self.builder.get_object('caption_entry')
-        self.tags_entry = self.builder.get_object('tags_entry')
+        self.tags_hbox = self.builder.get_object('tags_hbox')
         
         # Remove the first item in the combobox, for some reason GtkBuilder
         # adds a blank item which we don't want there.
@@ -304,13 +304,20 @@ class MainWindow(Window):
         self.album_location.set_sensitive(sensitive)
     
     def set_tags(self, tags):
-        names = []
         for tag in tags:
+            tag, x, y = tag
             if type(tag[0]) is int:
-                names.append(self.friends[tag[0]])
+                label = self.friends[tag[0]]
+                uid = tag[0]
             else:
-                names.append(tag[0])
-        self.tags_entry.set_text('; '.join(names))
+                label = tag[0]
+                uid = -1
+
+            button = TagLabel(label, uid, x, y)
+            button.connect('enter', self.on_tag_enter)
+            button.connect('leave', self.on_tag_leave)
+            self.tags_hbox.pack_start(button, False, False)
+        self.tags_hbox.show_all()
     
     def quit(self, *args):
         log.info('Shutting down main window')
@@ -331,6 +338,12 @@ class MainWindow(Window):
             return None
 
     ## Event Handlers ##
+    def on_tag_enter(self, widget):
+        self.preview_image.display_tag(widget.text, widget.x, widget.y)
+    
+    def on_tag_leave(self, widget):
+        self.preview_image.clear_tag()
+    
     def on_got_albums(self, albums):
         self.clear_photo_albums()
         for album in albums:
@@ -499,6 +512,7 @@ class MainWindow(Window):
             self.friends_chooser = FriendsDialog(self.facebook.uid,
                                                  self.friends)
         self.friends_chooser.dialog.set_position(gtk.WIN_POS_MOUSE)
+        
         if self.friends_chooser.run() != gtk.RESPONSE_OK:
             self.preview_image.clear_tag()
             return True
@@ -514,6 +528,7 @@ class MainWindow(Window):
         info['tags'] = tags
         self.set_tags(tags)
         self.photo_info[self.preview_image.filename] = info
+        self.preview_image.clear_tag()
     
     @signal
     def on_upload_button_clicked(self, *args):
