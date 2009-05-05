@@ -304,13 +304,16 @@ class MainWindow(Window):
         self.album_location.set_sensitive(sensitive)
     
     def set_tags(self, tags):
+        for child in self.tags_hbox.get_children():
+            self.tags_hbox.remove(child)
+
         for tag in tags:
             tag, x, y = tag
-            if type(tag[0]) is int:
-                label = self.friends[tag[0]]
-                uid = tag[0]
+            if type(tag) is int:
+                label = self.friends[tag]
+                uid = tag
             else:
-                label = tag[0]
+                label = tag
                 uid = -1
 
             button = TagLabel(label, uid, x, y)

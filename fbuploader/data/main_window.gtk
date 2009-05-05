@@ -512,6 +512,7 @@
                     <child>
                       <object class="GtkHBox" id="tags_hbox">
                         <property name="visible">True</property>
+                        <property name="spacing">5</property>
                         <child>
                           <placeholder/>
                         </child>
