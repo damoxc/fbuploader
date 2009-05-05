@@ -30,6 +30,9 @@ from fbuploader.common import EventThread, get_session_dir
 
 log = logging.getLogger(__name__)
 
+def color(r, g, b, a):
+    return r / 255.0, g / 255.0, b / 255.0, a
+
 def scale_image(pixbuf, max_width=None, max_height=None):
     width = pixbuf.get_width()
     height = pixbuf.get_height()
@@ -132,10 +135,16 @@ class PhotoPreview(gtk.Viewport):
         x = (self.width / 100.0) * x
         y = (self.height / 100.0) * y
         
-        # Draw the frame
-        ctx.set_source_rgba(0.1, 0.1, 0.1, 0.8)
+        # Draw the outer frame
+        ctx.set_source_rgba(*color(216, 223, 234, 0.8))
         ctx.set_line_width(max(ctx.device_to_user_distance(4.5, 4.5)))
         ctx.rectangle(x - 40, y - 40, 80, 80)
+        ctx.stroke()
+        
+        # Draw the inner frame
+        ctx.set_source_rgba(*color(59, 89, 152, 0.8))
+        ctx.set_line_width(max(ctx.device_to_user_distance(1.5, 1.5)))
+        ctx.rectangle(x - 38, y - 38, 76, 76)
         ctx.stroke()
         
         # If there's no name we don't need to draw the label.
