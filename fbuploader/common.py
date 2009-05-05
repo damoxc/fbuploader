@@ -31,6 +31,11 @@ from pkg_resources import resource_filename
 
 log = logging.getLogger(__name__)
 
+def __dependencies_for_freezing():
+    import atk
+    import pango
+    import pangocairo
+
 def signal(func):
     """
     Decorator that registers a function within a class as a signal handler
