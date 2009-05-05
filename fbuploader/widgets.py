@@ -26,7 +26,7 @@ import cairo
 import gobject
 import logging
 from pkg_resources import resource_filename
-from fbuploader.common import EventThread, get_session_dir
+from fbuploader.common import EventThread, get_session_dir, windows_check
 
 log = logging.getLogger(__name__)
 
@@ -312,7 +312,8 @@ class PhotoView(gtk.IconView):
     
     def add_photo_by_uri(self, uri):
         if uri.startswith('file://'):
-            self.add_photo(uri[7:])
+            l = windows_check() and 8 or 7
+            self.add_photo(uri[l:])
     
     def add_photos(self, filenames):
         log.debug('Adding photos')
@@ -323,7 +324,8 @@ class PhotoView(gtk.IconView):
     
     def add_photos_by_uri(self, uris):
         log.debug('Adding photos by uri')
-        filenames = [uri[7:] for uri in uris if uri.startswith('file://')]
+        l = windows_check() and 8 or 7
+        filenames = [uri[l:] for uri in uris if uri.startswith('file://')]
         self.add_photos(filenames)
 
     def load_photo(self, filename):

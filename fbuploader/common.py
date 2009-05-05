@@ -23,7 +23,9 @@
 import os
 import time
 import logging
+import platform
 import threading
+
 import gtk
 import gtk.gdk
 import xdg, xdg.BaseDirectory
@@ -80,6 +82,36 @@ def set_current_session(session_id):
     """
     global session
     session = session_id
+    
+def windows_check():
+    """
+    Checks if the current platform is Windows
+
+    :returns: True or False
+    :rtype: bool
+
+    """
+    return platform.system() in ('Windows', 'Microsoft')
+
+def vista_check():
+    """
+    Checks if the current platform is Windows Vista
+
+    :returns: True or False
+    :rtype: bool
+
+    """
+    return platform.release() == "Vista"
+
+def osx_check():
+    """
+    Checks if the current platform is Mac OS X
+
+    :returns: True or False
+    :rtype: bool
+
+    """
+    return platform.system() == "Darwin"
 
 def get_config_dir(filename=None):
     """
