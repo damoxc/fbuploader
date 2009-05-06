@@ -92,7 +92,7 @@ def autorotate_image(image):
     
     if orientation not in ORIENTATION:
         # We don't need to do anything for this as it's a normal image
-        return
+        return image
     return image.rotate(ORIENTATION[orientation])
 
 def get_exif(filename):
