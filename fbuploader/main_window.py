@@ -256,8 +256,11 @@ class MainWindow(Window):
             self.login()
         else:
             self.facebook.session_key = self.fb_session['session_key']
-            self.facebook.secret = FB_SECRET_KEY
             self.facebook.uid = self.fb_session['uid']
+            try:
+                self.facebook.friends.areFriends(self.facebook.uid, 12345)
+            except Exception, e:
+                self.login()
         self.photos_view.load_photos(self.photos)
     
     def login(self):
