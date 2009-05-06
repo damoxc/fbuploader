@@ -40,8 +40,33 @@ from PIL.ExifTags import TAGS
 ORIENTATION = {
     #1: 0,
     3: 180,
-    6: 270
+    6: 270,
+    8: 90
 }
+
+def autoprepare(filename):
+    """
+    Prepares an image for upload, resizing it to the maximum image size and
+    rotating it according to the EXIF info.
+    
+    :param filename: str, The path of the image
+    :returns: the prepared image
+    :rtype: Image
+    """
+    image = scale(filename)
+    return autorotate_image(image)
+
+def autoprepare_image(image):
+    """
+    Prepares an image for upload, resizing it to the maximum image size and
+    rotating it according to the EXIF info.
+    
+    :param image: Image, The image to rotate
+    :returns: the prepared image
+    :rtype: Image
+    """
+    scale_image(image)
+    return autorotate_image(image)
 
 def autorotate(filename):
     """
@@ -94,6 +119,29 @@ def get_exif_from_image(image):
         decoded = TAGS.get(tag, tag)
         ret[decoded] = value
     return ret
+
+def scale(filename, size=(604, 1024), filter=Image.ANTIALIAS):
+    """
+    Scales the image to the specified size.
+    
+    :param filename: str, the filename of the image
+    :param size: tuple, the width and height to scale to
+    :param filter: int, one of the PIL scale constants to use as the filter
+    """
+    image = Image.open(filename)
+    image.thumbnail(size, filter)
+    return image
+
+def scale_image(image, size=(604, 1024), filter=Image.ANTIALIAS):
+    """
+    Scales the image to the specified size.
+    
+    :param filename: str, the filename of the image
+    :param size: tuple, the width and height to scale to
+    :param filter: int, one of the PIL scale constants to use as the filter
+    """
+    image.thumbnail(size, filter)
+    return image
 
 def scale_pixbuf(pixbuf, width, height):
     """
