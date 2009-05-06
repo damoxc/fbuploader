@@ -67,7 +67,7 @@ def get_session_dir(filename=None):
     Returns the directory that contains the sessions.
     """
     if filename:
-        return get_config_dir(os.path.join(get_current_session()), filename)
+        return get_config_dir(os.path.join(get_current_session(), filename))
     else:
         return get_config_dir(get_current_session())
 
