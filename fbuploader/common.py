@@ -187,7 +187,7 @@ class Window(object):
     
     @property
     def gtk_file(self):
-        return resource_filename('fbuploader','data/%s.gtk' % self.window_name)
+        return resource_filename('fbuploader','data/%s.ui' % self.window_name)
     
     def get_signals(self):
         signals = {}
