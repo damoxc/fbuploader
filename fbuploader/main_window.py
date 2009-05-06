@@ -218,6 +218,10 @@ class MainWindow(Window):
             self.albums.remove(album)
             self.albums_combobox.remove_text(0)
     
+    def clear_tags(self):
+        for child in self.tags_hbox.get_children():
+            self.tags_hbox.remove(child)
+    
     def refresh_photo_albums(self):
         self.clear_photo_albums()
         album_downloader = AlbumDownloader(self.facebook)
@@ -303,8 +307,7 @@ class MainWindow(Window):
         self.album_location.set_sensitive(sensitive)
     
     def set_tags(self, tags):
-        for child in self.tags_hbox.get_children():
-            self.tags_hbox.remove(child)
+        self.clear_tags()
 
         for tag in tags:
             tag, x, y = tag
@@ -452,6 +455,9 @@ class MainWindow(Window):
     def on_photos_view_selection_changed(self, *args):
         selected = self.photos_view.get_selected_items()
         if not selected:
+            self.preview_image.clear()
+            self.caption_entry.set_text('')
+            self.clear_tags()
             return
 
         # If there was a previous image, save the value in the caption field

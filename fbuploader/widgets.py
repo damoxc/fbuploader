@@ -28,7 +28,7 @@ import gobject
 import logging
 from pkg_resources import resource_filename
 from fbuploader.common import EventThread, get_session_dir, windows_check
-from fbuploader.imaging import scale_pixbuf
+from fbuploader.imaging import autoprepare, scale_pixbuf
 
 log = logging.getLogger(__name__)
 
@@ -54,6 +54,8 @@ class PhotoPreview(gtk.Viewport):
         
         self.connect('size-allocate', self.on_image_size_allocate)
         self.connect('button-press-event', self.on_button_press_event)
+        
+        self.clear()
 
     def _scale_image(self, allocation=None):
         allocation = allocation or self.image.get_allocation()
@@ -82,6 +84,16 @@ class PhotoPreview(gtk.Viewport):
         log.debug('Scaled size run 2 (%dx%d)', width, height)
         self.width, self.height = width, height
         return self.pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
+
+    def clear(self):
+        """
+        Removes the currently displayed photo
+        """
+        self.pixbuf = None
+        self.filename = None
+        self.image.set_from_file(
+            resource_filename('fbuploader', 'data/fbuploader128.png')
+        )
     
     def clear_tag(self):
         """
@@ -200,30 +212,21 @@ class PhotoAdder(EventThread):
     
     def resize(self, filename):
         # Load the photo from the specified file
-        pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
+        image = autoprepare(filename)
         
-        # Get the widget and height of the photo, we may need to do some
-        # scaling!
-        width, height = pixbuf.get_width(), pixbuf.get_height()
-        
-        if width > 604:
-            # We need to resize the photo to the largest that facebook accepts,
-            # there is zero point in working with anything larger.
-            ratio = width / 604.0
-            width = 604
-            height = int(height / ratio)
-            pixbuf = pixbuf.scale_simple(width, height,
-                                         gtk.gdk.INTERP_BILINEAR)
-
-        # Save the possibly scaled pixbuf in the session directory
+        # Save the prepared image in the session directory
         filename = get_session_dir(os.path.basename(filename))
+        
         if not os.path.isdir(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
-        pixbuf.save(filename, 'jpeg', {'quality': '95'})
-        self.fire('photo-added', filename, width, height)
-        return pixbuf, filename, (width, height)
+        
+        image.save(filename)
+        
+        # Fire the photo added event
+        self.fire('photo-added', filename, *image.size)
+        return filename, image.size
     
-    def load(self, tree_iter, filename=None, pixbuf=None, size=None):
+    def load(self, tree_iter, filename=None, size=None):
         # Use the filename passed in if there is one
         if filename:
             self.model.set_value(tree_iter, 0, filename)
@@ -231,14 +234,10 @@ class PhotoAdder(EventThread):
             filename = self.model.get_value(tree_iter, 0)
         
         # Load the photo from the specified file or use the passed in pixbuf
-        pixbuf = pixbuf or gtk.gdk.pixbuf_new_from_file(filename)
-        
-        log.debug('Scaling')
-        scaled = scale_pixbuf(pixbuf, 100, 100)
-        self.model.set_value(tree_iter, 2, scaled)
-        log.debug('Resizing')
+        thumb = gtk.gdk.pixbuf_new_from_file_at_scale(filename, 100, 100, True)
+        self.model.set_value(tree_iter, 2, thumb)
         self.queue_resize()
-        del pixbuf, scaled
+        del thumb
     
     def run(self):
         tree_iter = self.add(self.filename)
@@ -247,8 +246,8 @@ class PhotoAdder(EventThread):
         size = None
         if not self.load_only:
             filename = self.model.get_value(tree_iter, 0)
-            pixbuf, filename, size = self.resize(filename)
-        self.load(tree_iter, filename, pixbuf, size)
+            filename, size = self.resize(filename)
+        self.load(tree_iter, filename, size)
 
 class QueuedPhotoAdder(PhotoAdder):
     def __init__(self, photos_view, load_only=False):
@@ -267,8 +266,8 @@ class QueuedPhotoAdder(PhotoAdder):
             size = None
             if not self.load_only:
                 filename = self.model.get_value(tree_iter, 0)
-                pixbuf, filename, size = self.resize(filename)
-            self.load(tree_iter, filename, pixbuf, size)
+                filename, size = self.resize(filename)
+            self.load(tree_iter, filename, size)
 
 class PhotoView(gtk.IconView):
     __gtype_name__ = 'PhotoView'
