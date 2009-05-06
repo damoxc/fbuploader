@@ -28,37 +28,12 @@ import gobject
 import logging
 from pkg_resources import resource_filename
 from fbuploader.common import EventThread, get_session_dir, windows_check
+from fbuploader.imaging import scale_pixbuf
 
 log = logging.getLogger(__name__)
 
 def color(r, g, b, a):
     return r / 255.0, g / 255.0, b / 255.0, a
-
-def scale_image(pixbuf, max_width=None, max_height=None):
-    width = pixbuf.get_width()
-    height = pixbuf.get_height()
-    
-    if width <= max_width or height <= max_height:
-        # We don't need to do a resize
-        return pixbuf
-    
-    # First stage to resize the picture by the largest dimension
-    if width > height:
-        ratio = width / float(max_width)
-        width, height = max_width, int(height / ratio)
-    else:
-        ratio = height / float(max_height)
-        width, height = int(width / ratio), max_height
-    
-    # Second stage to ensure that the smaller dimension isn't exceeding the
-    # maximum.
-    if width > max_width:
-        ratio = width / float(max_width)
-        width, height = max_width, int(height / ratio)
-    elif height > max_height:
-        ratio = height / float(max_height)
-        width, height = int(width / ratio), max_height
-    return pixbuf.scale_simple(width, height, gtk.gdk.INTERP_BILINEAR)
 
 loading_image = gtk.gdk.pixbuf_new_from_file(resource_filename(
     'fbuploader', 'data/fbuploader64.png'))
@@ -259,7 +234,7 @@ class PhotoAdder(EventThread):
         pixbuf = pixbuf or gtk.gdk.pixbuf_new_from_file(filename)
         
         log.debug('Scaling')
-        scaled = scale_image(pixbuf, 100, 100)
+        scaled = scale_pixbuf(pixbuf, 100, 100)
         self.model.set_value(tree_iter, 2, scaled)
         log.debug('Resizing')
         self.queue_resize()
@@ -347,7 +322,7 @@ class PhotoView(gtk.IconView):
             if photo[0] != filename:
                 continue
             pixbuf = gtk.gdk.pixbuf_new_from_file(filename)        
-            photo[2] = scale_image(pixbuf, 100, 100)
+            photo[2] = scale_pixbuf(pixbuf, 100, 100)
             self.queue_resize()
     
     def on_photo_added(self, filename, width, height):

@@ -242,7 +242,7 @@ class MainWindow(Window):
                 return
             session = pickle.load(open(path, 'rb'))
         except:
-            log.error('Unable to load session %d', session)
+            log.error('Unable to load session %s', session)
             return
 
         self.photos = session.get('photos')

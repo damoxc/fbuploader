@@ -66,15 +66,10 @@ def get_session_dir(filename=None):
     """
     Returns the directory that contains the sessions.
     """
-    if False:
-        pass
+    if filename:
+        return get_config_dir(os.path.join(get_current_session()), filename)
     else:
-        folder = os.path.join(xdg.BaseDirectory.save_config_path('fbuploader'),
-                              get_current_session())
-        if filename:
-            return os.path.join(folder, filename)
-        else:
-            return folder
+        return get_config_dir(get_current_session())
 
 def set_current_session(session_id):
     """
@@ -117,8 +112,12 @@ def get_config_dir(filename=None):
     """
     Return the configuration directory.
     """
-    if False:
-        pass
+    if windows_check():
+        if filename:
+            return os.path.join(os.environ.get('APPDATA'), 'fbuploader',
+                filename)
+        else:
+            return os.path.join(os.environ.get('APPDATA'), 'fbuploader')
     else:
         folder = xdg.BaseDirectory.save_config_path('fbuploader')
         if filename:
