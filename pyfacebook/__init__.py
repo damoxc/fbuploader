@@ -57,7 +57,6 @@ import mimetypes
     
 # try to use simplejson first, otherwise fallback to XML
 RESPONSE_FORMAT = 'JSON'
-RETRY_ATTEMPTS = 1
 try:
     import json as simplejson
 except ImportError:
@@ -98,14 +97,8 @@ try:
 
 except ImportError:
     def urlread(url, data=None):
-        global RETRY_ATTEMPTS
-        for attempt in xrange(0, RETRY_ATTEMPTS):
-            try:
-                res = urllib2.urlopen(url, data=data)
-                return res.read()
-            except Exception, e:
-                pass
-        raise Exception("Unable to contact facebook", e)
+        res = urllib2.urlopen(url, data=data)
+        return res.read()
     
 __all__ = ['Facebook']
 
@@ -428,15 +421,12 @@ METHODS = {
             ('x', float, [('default', 50)]),
             ('y', float, [('default', 50)]),
             ('tags', str, ['optional']),
-            ('owner_uid', int, ['optional']),
         ],
 
         'createAlbum': [
             ('name', str, []),
             ('location', str, ['optional']),
             ('description', str, ['optional']),
-            ('visible', str, [('default', 'everyone')]),
-            ('uid', int, ['optional']),
         ],
 
         'get': [
@@ -645,7 +635,7 @@ class FriendsProxy(FriendsProxy):
 class PhotosProxy(PhotosProxy):
     """Special proxy for facebook.photos."""
 
-    def upload(self, image, aid=None, caption=None, size=(604, 1024), filename=None, callback=None):
+    def upload(self, image, aid=None, caption=None, size=(604, 1024), filename=None):
         """Facebook API call. See http://developers.facebook.com/documentation.php?v=1.0&method=photos.upload
 
         size -- an optional size (width, height) to resize the image to before uploading. Resizes by default
@@ -688,38 +678,21 @@ class PhotosProxy(PhotosProxy):
         content_type, body = self.__encode_multipart_formdata(list(args.iteritems()), [(image, data)])
         urlinfo = urlparse.urlsplit(self._client.facebook_url)
         try:
-            content_length = len(body)
-            chunk_size = 4096
-            
-            h = httplib.HTTPConnection(urlinfo[1])
+            h = httplib.HTTP(urlinfo[1])
             h.putrequest('POST', urlinfo[2])
             h.putheader('Content-Type', content_type)
-            h.putheader('Content-Length', str(content_length))
+            h.putheader('Content-Length', str(len(body)))
             h.putheader('MIME-Version', '1.0')
             h.putheader('User-Agent', 'PyFacebook Client Library')
             h.endheaders()
-            
-            if callback:
-                count = 0
-                while len(body) > 0:
-                    if len(body) < chunk_size:
-                        data = body
-                        body = ''
-                    else:
-                        data = body[0:chunk_size]
-                        body = body[chunk_size:]
-                    
-                    h.send(data)
-                    count += 1
-                    callback(count, chunk_size, content_length)
-            else:
-                h.send(body)
-            
-            response = h.getresponse()
-            
-            if response.status != 200:
-                raise Exception('Error uploading photo: Facebook returned HTTP %s (%s)' % (response.status, response.reason))
-            response = response.read()
+            h.send(body)
+
+            reply = h.getreply()
+
+            if reply[0] != 200:
+                raise Exception('Error uploading photo: Facebook returned HTTP %s (%s)' % (reply[0], reply[1]))
+
+            response = h.file.read()
         except:
             # sending the photo failed, perhaps we are using GAE
             try:

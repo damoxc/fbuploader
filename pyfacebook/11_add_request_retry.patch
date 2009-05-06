@@ -1,0 +1,27 @@
+--- __init__.py.orig	2009-04-20 00:18:04.000000000 +0100
++++ __init__.py	2009-05-06 13:36:58.000000000 +0100
+@@ -57,6 +57,7 @@
+     
+ # try to use simplejson first, otherwise fallback to XML
+ RESPONSE_FORMAT = 'JSON'
++RETRY_ATTEMPTS = 1
+ try:
+     import json as simplejson
+ except ImportError:
+@@ -97,8 +98,14 @@
+ 
+ except ImportError:
+     def urlread(url, data=None):
+-        res = urllib2.urlopen(url, data=data)
+-        return res.read()
++        global RETRY_ATTEMPTS
++        for attempt in xrange(0, RETRY_ATTEMPTS):
++            try:
++                res = urllib2.urlopen(url, data=data)
++                return res.read()
++            except Exception, e:
++                pass
++        raise Exception("Unable to contact facebook", e)
+     
+ __all__ = ['Facebook']
+ 
