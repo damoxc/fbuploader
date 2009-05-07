@@ -205,6 +205,8 @@ class MainWindow(Window):
     
     def check_sessions(self):
         sessions = []
+        if not os.path.exists(get_config_dir()):
+            return
         for item in os.listdir(get_config_dir()):
             if os.path.isdir(os.path.join(get_config_dir(), item)):
                 sessions.append(item)
