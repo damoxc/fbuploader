@@ -115,7 +115,11 @@ def get_exif_from_image(image):
     :rtype dict:
     """
     ret = {}
-    for tag, value in image._getexif().iteritems():
+    exif_data = image._getexif()
+    if not exif_data:
+        return ret
+
+    for tag, value in exif_data.iteritems():
         decoded = TAGS.get(tag, tag)
         ret[decoded] = value
     return ret
