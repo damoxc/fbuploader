@@ -133,11 +133,14 @@ class FriendsDialog(Dialog, Events):
     def on_friend_entry_changed(self, *args):
         if not self.all_friends_expander.get_expanded():
             self.all_friends_expander.set_expanded(True)
+        
         if self.filter_friends(self.friend_entry.get_text()) == 1:
-            self.friend_entry.set_text(self.all_friends.get_model()[0][1])
+            pos = self.friend_entry.get_position() + 1
+            name = self.all_friends.get_model()[0][1]
+            self.friend_entry.insert_text(name[pos:], pos)
+            #self.friend_entry.set_text()
             selection = self.all_friends.get_selection()
             selection.select_path((0,))
-            self.all_friends.grab_focus()
     
     @signal
     def on_allfriends_treeview_row_activated(self, allfriends, path, column):

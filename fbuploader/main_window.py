@@ -33,6 +33,7 @@ import threading
 import cPickle as pickle
 
 from fbuploader.common import *
+from fbuploader.about_dialog import AboutDialog
 from fbuploader.friends_dialog import FriendsDialog
 from fbuploader.new_album_dialog import NewAlbumDialog
 from fbuploader.photochooser_dialog import PhotoChooser
@@ -198,6 +199,9 @@ class MainWindow(Window):
         # Initialize the new_album_dialog variable that will contain the
         # new album dialog later.
         self.new_album_dialog = None
+        
+        # Create a holder for the AboutDialog but don't create it just yet.
+        self.about_dialog = None
     
     def check_sessions(self):
         sessions = []
@@ -408,10 +412,9 @@ class MainWindow(Window):
         def on_delete_event(dialog, *args):
             dialog.hide()
             return True
-        about_dialog = self.tree.get_widget('about_dialog')
-        about_dialog.connect('delete-event', on_delete_event)
-        about_dialog.run()
-        about_dialog.hide()
+        self.about_dialog = self.about_dialog or AboutDialog()
+        self.about_dialog.run()
+        self.about_dialog.hide()
     
     @signal
     def on_albums_combobox_changed(self, e):

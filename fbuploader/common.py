@@ -203,6 +203,11 @@ class Window(object):
     def show(self):
         self.window.show()
         self.window.show_all()
+    
+    def __getattr__(self, name):
+        if hasattr(self.window, name):
+            return getattr(self.window, name)
+        raise AttributeError(name)
 
 class Dialog(Window):
     

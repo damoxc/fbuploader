@@ -31,6 +31,7 @@ along with this program.    If not, write to:
     <property name="artists">lopagof -  http://lopagof.deviantart.com/gallery/
 Yusuke Kamiyamane - &lt;yusuke.kamiyamane@gmail.com&gt;</property>
     <property name="logo">fbuploader96.png</property>
+    <signal name="delete_event" handler="on_about_dialog_delete_event"/>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox10">
         <property name="visible">True</property>
