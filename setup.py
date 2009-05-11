@@ -29,7 +29,7 @@ setup(name='FBUploader',
       long_description='''''',
       author='Damien Churchill',
       author_email='damoxc@gmail.com',
-      packages=find_packages(exclude='tests'),
+      packages=['fbuploader'],
       package_data={'fbuploader': ['data/*']},
       entry_points = """
       [console_scripts]
