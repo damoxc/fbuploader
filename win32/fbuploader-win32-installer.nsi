@@ -138,7 +138,7 @@ Section "Deluge Bittorrent Client" Section1
   fileOpen $0 "$INSTDIR\fbuploader.cmd" w
   fileWrite $0 '@ECHO OFF$\r$\n'
   fileWrite $0 'SET FBUPLOADERFOLDER="$INSTDIR"$\r$\n'
-  fileWrite $0 '"$INSTDIR\StartX.exe" /B /D%FBUPLOADERFOLDER% "$INSTDIR\FBUploader-Python\fbuploader.exe "%1" "%2" "%3" "%4""$\r$\n'
+  fileWrite $0 '"$INSTDIR\StartX.exe" /B /D%FBUPLOADERFOLDER% "$INSTDIR\FBUploader-Python\fbuploader-script.exe "%1" "%2" "%3" "%4""$\r$\n'
   fileClose $0
 SectionEnd
 
