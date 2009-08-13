@@ -29,7 +29,6 @@ import gobject
 import gtk.gdk
 import logging
 import facebook
-import cPickle as pickle
 
 from fbuploader import imaging
 from fbuploader.common import *
@@ -187,7 +186,7 @@ class MainWindow(Window):
             if not os.path.exists(path):
                 log.error("Session data doesn't exist")
                 return
-            session = pickle.load(open(path, 'rb'))
+            session = json.load(open(path, 'rb'))
         except:
             log.error('Unable to load session %s', session)
             return
@@ -234,7 +233,7 @@ class MainWindow(Window):
             path = get_session_dir('data')
             if not os.path.isdir(os.path.dirname(path)):
                 os.makedirs(os.path.dirname(path))
-            pickle.dump(session, open(path, 'wb'))
+            json.dump(session, open(path, 'wb'))
         except:
             log.error('Unable to save session info')
         
