@@ -63,32 +63,6 @@ class Autosave(EventThread):
             self.fire('save')
             time.sleep(self.interval)
 
-class AlbumDownloader(EventThread):
-    def __init__(self, facebook):
-        super(AlbumDownloader, self).__init__()
-        self.facebook = facebook
-    
-    def run(self):
-        log.info('Downloading photo albums')
-        albums = self.facebook.photos.getAlbums()
-        self.fire('downloaded', albums)
-
-class FriendsDownloader(EventThread):
-    def __init__(self, facebook):
-        super(FriendsDownloader, self).__init__()
-        self.facebook = facebook
-    
-    def run(self):
-        log.info('Downloading friends')
-        friends = {}
-        uids = self.facebook.friends.get()
-        uids.append(self.facebook.uid)
-        log.info('Downloading friend information')
-        for friend in self.facebook.users.getInfo(uids):
-            friends[friend['name']] = friend['uid']
-            friends[friend['uid']] = friend['name']
-        self.fire('downloaded', friends)
-
 class PhotoAdder(EventThread):
     def __init__(self, photos_view):
         super(PhotoAdder, self).__init__()
@@ -112,6 +86,7 @@ class MainWindow(Window):
         super(MainWindow, self).__init__()
         self.facebook = facebook.Facebook(FB_API_KEY, FB_SECRET_KEY)
         self.albums = []
+        self.friends = {}
         
         # Get widgets from the builder
         self.albums_combobox = self.builder.get_object('albums_combobox')
@@ -184,12 +159,6 @@ class MainWindow(Window):
                 sessions.append(item)
         return sessions
     
-    def check(self):
-        """
-        Checks to see if we have the required information to begin functioning
-        """
-        return not self.albums or hasattr(self, 'friends')
-    
     def clear_photo_albums(self):
         """
         Removes all the photo albums from the combobox and the albums array.
@@ -206,11 +175,32 @@ class MainWindow(Window):
         for child in self.tags_hbox.get_children():
             self.tags_hbox.remove(child)
     
-    def refresh_photo_albums(self):
+    def get_friends(self):
+        gobject.idle_add(self._get_friends)
+    
+    def _get_friends(self):
+        log.info('Downloading friends')
+        uids = self.facebook.friends.get()
+        uids.append(self.facebook.uid)
+        
+        self.friends.clear()
+        log.info('Downloading friend information')
+        for friend in self.facebook.users.getInfo(uids):
+            self.friends[friend['name']] = friend['uid']
+            self.friends[friend['uid']] = friend['name']
+    
+    def get_photo_albums(self):
+        gobject.idle_add(self._get_photo_albums)
+    
+    def _get_photo_albums(self):
+        albums = self.facebook.photos.getAlbums()
         self.clear_photo_albums()
-        album_downloader = AlbumDownloader(self.facebook)
-        album_downloader.on('downloaded', self.on_got_albums)
-        album_downloader.start()
+        for album in albums:
+            self.albums.append(album)
+            self.albums_combobox.append_text('%s (%d Photos)' % (album['name'],
+                                                                 album['size']))
+        self.albums_combobox.set_active(0)
+        self.set_sensitive(True)
         
     def get_signals(self):
         signals = super(MainWindow, self).get_signals()
@@ -379,22 +369,6 @@ class MainWindow(Window):
     def on_tag_leave(self, widget):
         self.preview_image.clear_tag()
     
-    def on_got_albums(self, albums):
-        self.clear_photo_albums()
-        for album in albums:
-            self.albums.append(album)
-            self.albums_combobox.append_text('%s (%d Photos)' % (album['name'],
-                                                                 album['size']))
-        self.albums_combobox.set_active(0)
-        
-        if self.check():
-            self.set_sensitive(True)
-    
-    def on_got_friends(self, friends):
-        self.friends = friends
-        if self.check():
-            self.set_sensitive(True)
-    
     def on_autosave(self):
         log.info('Autosaving session data')
         self.save()
@@ -407,10 +381,9 @@ class MainWindow(Window):
         else:
             create_new_session()
             self.login()
-        self.refresh_photo_albums()
-        friends_downloader = FriendsDownloader(self.facebook)
-        friends_downloader.on('downloaded', self.on_got_friends)
-        friends_downloader.start()
+
+        self.get_friends()
+        self.get_photo_albums()
         
         autosave = Autosave()
         autosave.on('save', self.on_autosave)
