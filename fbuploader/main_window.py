@@ -30,8 +30,6 @@ import gobject
 import gtk.gdk
 import logging
 import facebook
-import tempfile
-import threading
 import cPickle as pickle
 
 from fbuploader.common import *
@@ -48,34 +46,6 @@ FB_API_KEY = 'a7b58c2702d421a270df42cfff9f4007'
 FB_SECRET_KEY = 'a01ccd6ae703d353a701ea49f63b7667'
 
 cover_re = re.compile('(\d+)\{([\w_]+)\}.jpg')
-
-class Autosave(EventThread):
-    def __init__(self, interval=30):
-        super(Autosave, self).__init__()
-        self.interval = interval
-        self.do_abort = False
-    
-    def abort(self):
-        self.do_abort = True
-    
-    def run(self):
-        while not self.do_abort:
-            self.fire('save')
-            time.sleep(self.interval)
-
-class PhotoAdder(EventThread):
-    def __init__(self, photos_view):
-        super(PhotoAdder, self).__init__()
-        self.photos_view = photos_view
-        self.photos = []
-    
-    def add(self, photo):
-        self.photos.append(photo)
-    
-    def run(self):
-        for photo in self.photos:
-            filename, width, height = self.photos_view.add_photo(photo)
-            self.fire('photo-added', filename, width, height)
 
 class MainWindow(Window):
 
@@ -321,6 +291,14 @@ class MainWindow(Window):
             self.tags_hbox.pack_start(button, False, False)
         self.tags_hbox.show_all()
     
+    def start_autosave(self):
+        gobject.timeout_add(30, self._autosave)
+    
+    def _autosave(self):
+        log.info('Autosaving session data')
+        self.save()
+        gobject.timeout_add(30, self._autosave)
+    
     def quit(self, *args):
         log.info('Shutting down main window')
         if self.photo_chooser is not None:
@@ -368,11 +346,7 @@ class MainWindow(Window):
     
     def on_tag_leave(self, widget):
         self.preview_image.clear_tag()
-    
-    def on_autosave(self):
-        log.info('Autosaving session data')
-        self.save()
-    
+
     @signal
     def on_main_window_show(self, e):
         old_sessions = self.check_sessions()
@@ -384,10 +358,7 @@ class MainWindow(Window):
 
         self.get_photo_albums()
         self.get_friends()
-        
-        autosave = Autosave()
-        autosave.on('save', self.on_autosave)
-        autosave.start()
+        self.start_autosave()
     
     ## Menu Handlers
     @signal
