@@ -124,6 +124,11 @@ def get_exif_from_image(image):
         ret[decoded] = value
     return ret
 
+def rotate(filename, angle):
+    img = Image.open(filename)
+    out = img.rotate(angle)
+    out.save(filename, 'JPEG')
+
 def scale(filename, size=(604, 1024), filter=Image.ANTIALIAS):
     """
     Scales the image to the specified size.

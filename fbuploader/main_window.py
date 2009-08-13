@@ -24,7 +24,6 @@ import os
 import re
 import gtk
 import time
-import Image
 import urllib
 import gobject
 import gtk.gdk
@@ -32,6 +31,7 @@ import logging
 import facebook
 import cPickle as pickle
 
+from fbuploader import imaging
 from fbuploader.common import *
 from fbuploader.about_dialog import AboutDialog
 from fbuploader.friends_dialog import FriendsDialog
@@ -292,12 +292,12 @@ class MainWindow(Window):
         self.tags_hbox.show_all()
     
     def start_autosave(self):
-        gobject.timeout_add(30, self._autosave)
+        gobject.timeout_add(30000, self._autosave)
     
     def _autosave(self):
         log.info('Autosaving session data')
         self.save()
-        gobject.timeout_add(30, self._autosave)
+        gobject.timeout_add(30000, self._autosave)
     
     def quit(self, *args):
         log.info('Shutting down main window')
@@ -460,21 +460,17 @@ class MainWindow(Window):
     
     @signal
     def on_rotate_left_button_clicked(self, *args):
-        filename = self.preview_image.filename
-        img = Image.open(filename)
-        out = img.rotate(90)
-        out.save(filename, 'JPEG')
-        self.preview_image.set_from_file(filename)
-        self.photos_view.reload_photo(filename)
+        imaging.rotate(self.preview_image.filename, 90)
+        self.preview_image.set_from_file(self.preview_image.filename)
+        self.photos_view.reload_photo(self.preview_image.filename)
+        self.photos_view.queue_resize()
     
     @signal
     def on_rotate_right_button_clicked(self, *args):
-        filename = self.preview_image.filename
-        img = Image.open(filename)
-        out = img.rotate(270)
-        out.save(filename, 'JPEG')
-        self.preview_image.set_from_file(filename)
-        self.photos_view.reload_photo(filename)
+        imaging.rotate(self.preview_image.filename, 270)
+        self.preview_image.set_from_file(self.preview_image.filename)
+        self.photos_view.reload_photo(self.preview_image.filename)
+        self.photos_view.queue_resize()
     
     @signal
     def on_photo_tag(self, widget, x, y, event):
