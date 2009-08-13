@@ -31,6 +31,11 @@ import gtk.gdk
 import xdg, xdg.BaseDirectory
 from pkg_resources import resource_filename
 
+try:
+    import json
+except:
+    import simplejson as json
+
 log = logging.getLogger(__name__)
 
 def __dependencies_for_freezing():

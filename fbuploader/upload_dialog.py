@@ -26,13 +26,7 @@ import logging
 import threading
 from math import ceil
 from pkg_resources import resource_filename
-from fbuploader.common import Dialog, EventThread, signal
-
-try:
-    import json as simplejson
-except:
-    import simplejson
-    
+from fbuploader.common import Dialog, EventThread, signal, json
 
 log = logging.getLogger(__name__)
 
@@ -79,7 +73,7 @@ class PhotoUploader(EventThread):
         
         tags = map(format_tag, self.photo_info.get('tags', []))
         if tags:
-            tags = simplejson.dumps(tags)
+            tags = json.dumps(tags)
             log.info('Tagging photo: %s', os.path.basename(self.photo))
             self.fire('before-tag', self.photo)
             log.debug('Running add_tag(%r, %r)', self.pid, tags)
