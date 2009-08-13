@@ -326,6 +326,13 @@ class PhotoView(gtk.IconView):
             photo[2] = scale_pixbuf(pixbuf, 100, 100)
             self.queue_resize()
     
+    def remove_photo(self, iter):
+        filename = self.get_model().get(iter, 0)[0]
+        self.get_model().remove(iter)
+        self.select_path(selection[0])
+        self.emit('photo-deleted', filename)
+        self.queue_resize()
+    
     def on_photo_added(self, filename, width, height):
         self.emit('photo-added', filename, width, height)
     
@@ -335,12 +342,7 @@ class PhotoView(gtk.IconView):
         selection = self.get_selected_items()
         if not selection:
             return
-        
-        tree_iter = self.get_model().get_iter(selection[0])
-        filename = self.get_model().get(tree_iter, 0)[0]
-        self.get_model().remove(tree_iter)
-        self.select_path(selection[0])
-        self.emit('photo-deleted', filename)
+        self.remove_photo(self.get_model().get_iter(selection[0]))
 
 gobject.signal_new('photo-added', PhotoView,
     gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
