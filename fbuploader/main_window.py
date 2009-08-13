@@ -382,8 +382,8 @@ class MainWindow(Window):
             create_new_session()
             self.login()
 
-        self.get_friends()
         self.get_photo_albums()
+        self.get_friends()
         
         autosave = Autosave()
         autosave.on('save', self.on_autosave)
