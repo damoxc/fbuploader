@@ -173,6 +173,8 @@ class PhotoPreview(gtk.Viewport):
         if self.pixbuf is None: return
         if self.is_resize:
             self.image.set_from_pixbuf(self._scale_image())
+            self.image.set_size_request(-1, -1)
+            self.set_size_request(-1, -1)
             self.is_resize = False
         else:
             self.is_resize = True

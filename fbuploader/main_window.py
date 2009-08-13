@@ -21,10 +21,12 @@
 #
 
 import os
+import re
 import gtk
 import time
 import Image
 import urllib
+import gobject
 import gtk.gdk
 import logging
 import facebook
@@ -44,6 +46,8 @@ log = logging.getLogger(__name__)
 
 FB_API_KEY = 'a7b58c2702d421a270df42cfff9f4007'
 FB_SECRET_KEY = 'a01ccd6ae703d353a701ea49f63b7667'
+
+cover_re = re.compile('(\d+)\{([\w_]+)\}.jpg')
 
 class Autosave(EventThread):
     def __init__(self, interval=30):
@@ -85,37 +89,6 @@ class FriendsDownloader(EventThread):
             friends[friend['uid']] = friend['name']
         self.fire('downloaded', friends)
 
-class AlbumCoverDownloader(EventThread):
-    def __init__(self, facebook, album):
-        super(AlbumCoverDownloader, self).__init__()
-        self.facebook = facebook
-        self.album = album
-
-    def run(self):
-        if 'cover_file' in self.album:
-            self.callback(self.album['cover_file'])
-            return
-
-        log.info('Retreiving album cover photo')
-        cover_photo = self.facebook.photos.get(pids=self.album['cover_pid'])
-        if cover_photo:
-            cover_photo = cover_photo[0]
-        else:
-            log.info('Album has no cover photo')
-            return
-
-        data_dir = os.path.join(tempfile.gettempdir(), 'fbuploader')
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
-
-        path = os.path.join(data_dir, os.path.basename(cover_photo['src']))
-        if not os.path.exists(path):
-            log.info('Downloading album cover photo')
-            urllib.urlretrieve(cover_photo['src'], path)
-            
-        self.album['cover_file'] = path
-        self.fire('downloaded', path)
-
 class PhotoAdder(EventThread):
     def __init__(self, photos_view):
         super(PhotoAdder, self).__init__()
@@ -129,7 +102,6 @@ class PhotoAdder(EventThread):
         for photo in self.photos:
             filename, width, height = self.photos_view.add_photo(photo)
             self.fire('photo-added', filename, width, height)
-
 
 class MainWindow(Window):
 
@@ -205,10 +177,10 @@ class MainWindow(Window):
     
     def check_sessions(self):
         sessions = []
-        if not os.path.exists(get_config_dir()):
+        if not os.path.exists(get_config_dir('sessions')):
             return
-        for item in os.listdir(get_config_dir()):
-            if os.path.isdir(os.path.join(get_config_dir(), item)):
+        for item in os.listdir(get_config_dir('sessions')):
+            if os.path.isdir(os.path.join(get_config_dir('sessions'), item)):
                 sessions.append(item)
         return sessions
     
@@ -219,12 +191,18 @@ class MainWindow(Window):
         return not self.albums or hasattr(self, 'friends')
     
     def clear_photo_albums(self):
+        """
+        Removes all the photo albums from the combobox and the albums array.
+        """
         albums = self.albums[:]
         for album in albums:
             self.albums.remove(album)
             self.albums_combobox.remove_text(0)
     
     def clear_tags(self):
+        """
+        Removes the tag widgets from the tag HBox widget.
+        """
         for child in self.tags_hbox.get_children():
             self.tags_hbox.remove(child)
     
@@ -299,6 +277,26 @@ class MainWindow(Window):
             pickle.dump(session, open(path, 'wb'))
         except:
             log.error('Unable to save session info')
+        
+    def set_album_cover(self, album):
+        gobject.idle_add(self._set_album_cover, album)
+    
+    def _set_album_cover(self, album):
+        data_dir = get_config_dir('covers')
+        for cover in os.listdir(data_dir):
+            match = cover_re.match(cover)
+            if not match:
+                continue
+            
+            if album['aid'] != match.group(1) or album['cover_pid'] != match.group(2):
+                # Either the photo has been changed or it's for the wrong album
+                continue
+            
+            path = get_config_dir(os.path.join('covers', cover))
+            self.album_cover.set_from_file(path)
+            return
+
+        self.update_cover(album)
     
     def set_sensitive(self, sensitive=True):
         action = sensitive and 'Enabling' or 'Disabling'
@@ -342,6 +340,29 @@ class MainWindow(Window):
         try:
             gtk.main_quit()
         except RuntimeError: pass
+    
+    def update_cover(self, album):
+        gobject.idle_add(self._update_cover, album)
+    
+    def _update_cover(self, album):
+        cover_photo = self.facebook.photos.get(pids=album['cover_pid'])
+        
+        if not cover_photo:
+            log.info('Album has no cover photo')
+            return
+        
+        cover_photo = cover_photo[0]
+        
+        data_dir = get_config_dir('covers')
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+        
+        filename = '%s{%s}.jpg' % (album['aid'], album['cover_pid'])
+        log.info('Downloading album cover photo')
+        
+        path = os.path.join(data_dir, filename)
+        urllib.urlretrieve(cover_photo['src'], path)
+        self.album_cover.set_from_file(path)
         
     ## Properties ##
     @property
@@ -373,9 +394,6 @@ class MainWindow(Window):
         self.friends = friends
         if self.check():
             self.set_sensitive(True)
-    
-    def on_got_albumcover(self, path):
-        self.album_cover.set_from_file(path)
     
     def on_autosave(self):
         log.info('Autosaving session data')
@@ -428,10 +446,7 @@ class MainWindow(Window):
         self.album_name.set_text(album['name'])
         self.album_description.set_text(album['description'])
         self.album_location.set_text(album['location'])
-        
-        album_cover_downloader = AlbumCoverDownloader(self.facebook, album)
-        album_cover_downloader.on('downloaded', self.on_got_albumcover)
-        album_cover_downloader.start()
+        self.set_album_cover(album)
 
     ## DND Stuff ##
     @signal
