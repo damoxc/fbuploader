@@ -179,17 +179,20 @@ class MainWindow(Window):
         return signals
     
     def load(self, session):
+        if not session:
+            return False
+        
         log.info('Loading session %s', session)
         try:
             set_current_session(session)
             path = get_session_dir('data')
             if not os.path.exists(path):
                 log.error("Session data doesn't exist")
-                return
+                return False
             session = json.load(open(path, 'rb'))
         except:
             log.error('Unable to load session %s', session)
-            return
+            return False
 
         self.photos = session.get('photos')
         self.photo_info = session.get('photo_info')
@@ -349,9 +352,7 @@ class MainWindow(Window):
     @signal
     def on_main_window_show(self, e):
         old_sessions = self.check_sessions()
-        if old_sessions:
-            self.load(old_sessions[0])
-        else:
+        if not self.load(old_sessions and old_sessions[0] or None):
             create_new_session()
             self.login()
 
