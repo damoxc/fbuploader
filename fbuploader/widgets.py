@@ -106,9 +106,12 @@ class PhotoPreview(gtk.Viewport):
         """
         Display a tag on the photo.
         
-        :param name: str, The name to display alongside the tag.
-        :param x: int, The percentage to the tag, x dimension.
-        :param y: int, The percentage to the tag, y dimension.
+        :param name: The name to display alongside the tag.
+        :type name: str
+        :param x: The percentage to the tag, x dimension.
+        :type x: int
+        :param y: The percentage to the tag, y dimension.
+        :type y: int
         """
         
         log.debug('Display tag (%r, %r, %r)', name, x, y)
@@ -159,7 +162,8 @@ class PhotoPreview(gtk.Viewport):
         """
         Set the photo to display in the preview.
         
-        :param filename: str, The filename of the photo to load.
+        :param filename: The filename of the photo to load.
+        :type filename: str
         """
         self.filename = filename
         self.pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
