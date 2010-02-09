@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # setup.py
 #
-# Copyright (C) 2009 Damien Churchill <damoxc@gmail.com>
+# Copyright (C) 2009-2010 Damien Churchill <damoxc@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 from setuptools import setup, find_packages
 
 setup(name='FBUploader',
-      version='0.1',
+      version='0.2',
       license='GPLv3',
       description='Facebook photo uploader',
       long_description='''''',

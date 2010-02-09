@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # fbuploader/imaging.py
 #
-# Copyright (C) 2009 Damien Churchill <damoxc@gmail.com>
+# Copyright (C) 2009-2010 Damien Churchill <damoxc@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
