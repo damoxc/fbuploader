@@ -50,11 +50,14 @@ import struct
 import urllib
 import urllib2
 import httplib
-import hashlib
+try:
+    import hashlib
+except ImportError:
+    import md5 as hashlib
 import binascii
 import urlparse
 import mimetypes
-    
+
 # try to use simplejson first, otherwise fallback to XML
 RESPONSE_FORMAT = 'JSON'
 RETRY_ATTEMPTS = 1
@@ -90,7 +93,7 @@ try:
 
         result = urlfetch.fetch(url, method=method,
                                 payload=data, headers=headers)
-        
+
         if result.status_code == 200:
             return result.content
         else:
@@ -106,7 +109,7 @@ except ImportError:
             except Exception, e:
                 pass
         raise Exception("Unable to contact facebook", e)
-    
+
 __all__ = ['Facebook']
 
 VERSION = '0.1'
@@ -122,7 +125,7 @@ METHODS = {
         'getPublicInfo': [
             ('application_id', int, ['optional']),
             ('application_api_key', str, ['optional']),
-            ('application_canvas_name ', str,['optional']),
+            ('application_canvas_name', str,['optional']),
         ],
     },
 
@@ -210,6 +213,7 @@ METHODS = {
             ('template_data', json, ['optional']),
             ('target_ids', list, ['optional']),
             ('body_general', str, ['optional']),
+            ('story_size', int, ['optional']),
         ],
     },
 
@@ -401,6 +405,7 @@ METHODS = {
     # pages methods
     'pages': {
         'getInfo': [
+            ('fields', list, [('default', ['page_id', 'name'])]),
             ('page_ids', list, ['optional']),
             ('uid', int, ['optional']),
         ],
@@ -454,7 +459,7 @@ METHODS = {
             ('pids', list, []),
         ],
     },
-    
+
     # status methods
     'status': {
         'get': [
@@ -500,7 +505,7 @@ METHODS = {
     'data': {
         'getCookies': [
             ('uid', int, []),
-            ('string', str, []),
+            ('string', str, ['optional']),
         ],
 
         'setCookie': [
@@ -525,6 +530,60 @@ METHODS = {
         'getUnconnectedFriendsCount': [
         ],
     },
+
+    #stream methods (beta)
+    'stream' : {
+        'addComment' : [
+            ('post_id', int, []),
+            ('comment', str, []),
+            ('uid', int, ['optional']),
+        ],
+
+        'addLike': [
+            ('uid', int, ['optional']),
+            ('post_id', int, ['optional']),
+        ],
+
+        'get' : [
+            ('viewer_id', int, ['optional']),
+            ('source_ids', list, ['optional']),
+            ('start_time', int, ['optional']),
+            ('end_time', int, ['optional']),
+            ('limit', int, ['optional']),
+            ('filter_key', str, ['optional']),
+        ],
+
+        'getComments' : [
+            ('post_id', int, []),
+        ],
+
+        'getFilters' : [
+            ('uid', int, ['optional']),
+        ],
+
+        'publish' : [
+            ('message', str, ['optional']),
+            ('attachment', json, ['optional']),
+            ('action_links', json, ['optional']),
+            ('target_id', str, ['optional']),
+            ('uid', str, ['optional']),
+        ],
+
+        'remove' : [
+            ('post_id', int, []),
+            ('uid', int, ['optional']),
+        ],
+
+        'removeComment' : [
+            ('comment_id', int, []),
+            ('uid', int, ['optional']),
+        ],
+
+        'removeLike' : [
+            ('uid', int, ['optional']),
+            ('post_id', int, ['optional']),
+        ],
+    }
 }
 
 class Proxy(object):
@@ -690,7 +749,7 @@ class PhotosProxy(PhotosProxy):
         try:
             content_length = len(body)
             chunk_size = 4096
-            
+
             h = httplib.HTTPConnection(urlinfo[1])
             h.putrequest('POST', urlinfo[2])
             h.putheader('Content-Type', content_type)
@@ -698,7 +757,7 @@ class PhotosProxy(PhotosProxy):
             h.putheader('MIME-Version', '1.0')
             h.putheader('User-Agent', 'PyFacebook Client Library')
             h.endheaders()
-            
+
             if callback:
                 count = 0
                 while len(body) > 0:
@@ -708,15 +767,15 @@ class PhotosProxy(PhotosProxy):
                     else:
                         data = body[0:chunk_size]
                         body = body[chunk_size:]
-                    
+
                     h.send(data)
                     count += 1
                     callback(count, chunk_size, content_length)
             else:
                 h.send(body)
-            
+
             response = h.getresponse()
-            
+
             if response.status != 200:
                 raise Exception('Error uploading photo: Facebook returned HTTP %s (%s)' % (response.status, response.reason))
             response = response.read()
@@ -795,6 +854,10 @@ class Facebook(object):
         True if this is a desktop app, False otherwise. Used for determining how to
         authenticate.
 
+    ext_perms
+        Any extended permissions that the user has granted to your application.
+        This parameter is set only if the user has granted any.
+
     facebook_url
         The url to use for Facebook requests.
 
@@ -804,11 +867,26 @@ class Facebook(object):
     in_canvas
         True if the current request is for a canvas page.
 
+    in_iframe
+        True if the current request is for an HTML page to embed in Facebook inside an iframe.
+
+    is_session_from_cookie
+        True if the current request session comes from a session cookie.
+
+    in_profile_tab
+        True if the current request is for a user's tab for your application.
+
     internal
         True if this Facebook object is for an internal application (one that can be added on Facebook)
 
+    locale
+        The user's locale. Default: 'en_US'
+
     page_id
         Set to the page_id of the current page (if any)
+
+    profile_update_time
+        The time when this user's profile was last updated. This is a UNIX timestamp. Default: None if unknown.
 
     secret
         Secret that is used after getSession for desktop apps.
@@ -857,11 +935,17 @@ class Facebook(object):
         self.uid = None
         self.page_id = None
         self.in_canvas = False
+        self.in_iframe = False
+        self.is_session_from_cookie = False
+        self.in_profile_tab = False
         self.added = False
         self.app_name = app_name
         self.callback_path = callback_path
         self.internal = internal
         self._friends = None
+        self.locale = 'en_US'
+        self.profile_update_time = None
+        self.ext_perms = None
         self.proxy = proxy
         if facebook_url is None:
             self.facebook_url = FACEBOOK_URL
@@ -1025,6 +1109,10 @@ class Facebook(object):
         if method is None:
             return self
 
+        # __init__ hard-codes into en_US
+        if args is not None and not args.has_key('locale'):
+            args['locale'] = self.locale
+
         # @author: houyr
         # fix for bug of UnicodeEncodeError
         post_data = self.unicode_urlencode(self._build_post_args(method, args))
@@ -1033,7 +1121,7 @@ class Facebook(object):
             proxy_handler = urllib2.ProxyHandler(self.proxy)
             opener = urllib2.build_opener(proxy_handler)
             if secure:
-                response = opener.open(self.facebook_secure_url, post_data).read() 
+                response = opener.open(self.facebook_secure_url, post_data).read()
             else:
                 response = opener.open(self.facebook_url, post_data).read()
         else:
@@ -1044,7 +1132,7 @@ class Facebook(object):
 
         return self._parse_response(response, method)
 
-    
+
     # URL helpers
     def get_url(self, page, **args):
         """
@@ -1058,7 +1146,7 @@ class Facebook(object):
     def get_app_url(self, path=''):
         """
         Returns the URL for this app's canvas page, according to app_name.
-        
+
         """
         return 'http://apps.facebook.com/%s/%s' % (self.app_name, path)
 
@@ -1104,7 +1192,7 @@ class Facebook(object):
 
         if next is not None:
             args['next'] = next
-			
+
         if canvas is True:
             args['canvas'] = 1
 
@@ -1162,6 +1250,7 @@ class Facebook(object):
         if self.session_key and (self.uid or self.page_id):
             return True
 
+
         if request.method == 'POST':
             params = self.validate_signature(request.POST)
         else:
@@ -1188,10 +1277,12 @@ class Facebook(object):
             # first check if we are in django - to check cookies
             if hasattr(request, 'COOKIES'):
                 params = self.validate_cookie_signature(request.COOKIES)
+                self.is_session_from_cookie = True
             else:
                 # if not, then we might be on GoogleAppEngine, check their request object cookies
                 if hasattr(request,'cookies'):
                     params = self.validate_cookie_signature(request.cookies)
+                    self.is_session_from_cookie = True
 
         if not params:
             return False
@@ -1199,11 +1290,29 @@ class Facebook(object):
         if params.get('in_canvas') == '1':
             self.in_canvas = True
 
+        if params.get('in_iframe') == '1':
+            self.in_iframe = True
+
+        if params.get('in_profile_tab') == '1':
+            self.in_profile_tab = True
+
         if params.get('added') == '1':
             self.added = True
 
         if params.get('expires'):
             self.session_key_expires = int(params['expires'])
+
+        if 'locale' in params:
+            self.locale = params['locale']
+
+        if 'profile_update_time' in params:
+            try:
+                self.profile_update_time = int(params['profile_update_time'])
+            except ValueError:
+                pass
+
+        if 'ext_perms' in params:
+            self.ext_perms = params['ext_perms']
 
         if 'friends' in params:
             if params['friends']:
@@ -1225,6 +1334,10 @@ class Facebook(object):
                 self.uid = params['profile_user']
             else:
                 return False
+        elif 'canvas_user' in params:
+            self.uid = params['canvas_user']
+        elif 'uninstall' in params:
+            self.uid = params['user']
         else:
             return False
 
@@ -1259,23 +1372,28 @@ class Facebook(object):
         """
         Validate parameters passed by cookies, namely facebookconnect or js api.
         """
-        if not self.api_key in cookies.keys():
+
+        api_key = self.api_key
+        if api_key not in cookies:
             return None
 
-        sigkeys = []
-        params = dict()
-        for k in sorted(cookies.keys()):
-            if k.startswith(self.api_key+"_"):
-                sigkeys.append(k)
-                params[k.replace(self.api_key+"_","")] = cookies[k]
-
-
-        vals = ''.join(['%s=%s' % (x.replace(self.api_key+"_",""), cookies[x]) for x in sigkeys])
+        prefix = api_key + "_"
+       
+        params = {} 
+        vals = ''
+        for k in sorted(cookies):
+            if k.startswith(prefix):
+                key = k.replace(prefix,"")
+                value = cookies[k]
+                params[key] = value
+                vals += '%s=%s' % (key, value)
+                
         hasher = hashlib.md5(vals)
-        
+
         hasher.update(self.secret_key)
         digest = hasher.hexdigest()
-        if digest == cookies[self.api_key]:
+        if digest == cookies[api_key]:
+            params['is_session_from_cookie'] = True
             return params
         else:
             return False
