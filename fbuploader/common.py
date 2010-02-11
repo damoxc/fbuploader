@@ -24,7 +24,6 @@ import os
 import time
 import logging
 import platform
-import threading
 
 import gtk
 import gtk.gdk
@@ -168,16 +167,6 @@ class Events(object):
         callbacks.remove(callback)
         self.__events[event] = callbacks
 
-class EventThread(threading.Thread, Events):
-    def __init__(self):
-        super(EventThread, self).__init__()
-        Events.__init__(self)
-    
-    def fire(self, event, *args):
-        gtk.gdk.threads_enter()
-        super(EventThread, self).fire(event, *args)
-        gtk.gdk.threads_leave()
-
 class Window(object):
 
     icon = resource_filename('fbuploader', 'data/fbuploader64.png')
@@ -243,5 +232,5 @@ __all__ = [
     'set_current_session', 'get_config_dir', 'property',
     
     # classes
-    'Dialog', 'Events', 'EventThread', 'MessageBox', 'Window'
+    'Dialog', 'Events', 'MessageBox', 'Window'
 ]

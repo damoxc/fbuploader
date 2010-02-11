@@ -56,29 +56,37 @@ class MainWindow(Window):
         self.facebook = facebook.Facebook(FB_API_KEY, FB_SECRET_KEY)
         self.albums = []
         self.friends = {}
+
         
         # Get widgets from the builder
-        self.albums_combobox = self.builder.get_object('albums_combobox')
-        self.album_cover = self.builder.get_object('albumcover_image')
-        self.album_name = self.builder.get_object('albumname_entry')
-        self.album_description = self.builder.get_object('albumdescription_entry')
-        self.album_location = self.builder.get_object('albumlocation_entry')
+        get_object = self.builder.get_object
+        self.albums_combobox = get_object('albums_combobox')
+        self.album_cover = get_object('albumcover_image')
+        self.album_name = get_object('albumname_entry')
+        self.album_description = get_object('albumdescription_entry')
+        self.album_location = get_object('albumlocation_entry')
         
-        self.preview_image = self.builder.get_object('preview_image')
-        self.caption_entry = self.builder.get_object('caption_entry')
-        self.tags_hbox = self.builder.get_object('tags_hbox')
+        self.preview_image = get_object('preview_image')
+        self.caption_entry = get_object('caption_entry')
+        self.tags_hbox = get_object('tags_hbox')
         
         # Remove the first item in the combobox, for some reason GtkBuilder
         # adds a blank item which we don't want there.
         self.albums_combobox.remove_text(0)
         
-        # Add in the photos view widget
+        # Add in the PhotoView widget
         self.photos_view = PhotoView()
-        self.photos_view.connect('photo-added', self.on_photos_view_add_photo)
-        self.photos_view.connect('photo-deleted', self.on_photos_view_delete_photo)
-        self.builder.get_object('photos_scrolled').add(self.photos_view)
-        self.photos_view.connect('selection-changed', self.on_photos_view_selection_changed)
+
+        # Connect up the signals for the PhotoView
+        self.photos_view.connect('photo-added',
+            self.on_photos_view_add_photo)
+        self.photos_view.connect('photo-deleted',
+            self.on_photos_view_delete_photo)
+        get_object('photos_scrolled').add(self.photos_view)
+        self.photos_view.connect('selection-changed',
+            self.on_photos_view_selection_changed)
         
+        # Configure drag and drop for the PhotoView
         self.photos_view.drag_dest_set(gtk.DEST_DEFAULT_ALL,
             [('text/uri-list', 0, 0)], gtk.gdk.ACTION_COPY)
         self.photos_view.connect('drag-data-received',
@@ -86,7 +94,7 @@ class MainWindow(Window):
         
         # Add in the preview photo image widget
         self.preview_image = PhotoPreview()
-        self.builder.get_object('preview_vbox').pack_start(self.preview_image)
+        get_object('preview_vbox').pack_start(self.preview_image)
         self.preview_image.connect('tag-event', self.on_photo_tag)
         
         # Disable the UI, we don't want it active until we have data.
@@ -99,8 +107,9 @@ class MainWindow(Window):
         # filechooser dialog.
         self.photo_chooser = None
         
-        # Initialize the photos list and photo_info dictionary used to store 
-        # the order and information (width/height/caption/tags) for the photos
+        # Initialize the photos list and photo_info dictionary used to
+        # store the order and information (width/height/caption/tags) for
+        # the photos
         self.photos = []
         self.photo_info = {}
         
@@ -145,10 +154,10 @@ class MainWindow(Window):
             self.tags_hbox.remove(child)
     
     def get_friends(self):
+        log.info('Downloading friends')
         gobject.idle_add(self._get_friends)
     
     def _get_friends(self):
-        log.info('Downloading friends')
         uids = self.facebook.friends.get()
         uids.append(self.facebook.uid)
         
@@ -159,6 +168,7 @@ class MainWindow(Window):
             self.friends[friend['uid']] = friend['name']
     
     def get_photo_albums(self):
+        log.info('Downloading albums')
         gobject.idle_add(self._get_photo_albums)
     
     def _get_photo_albums(self):
@@ -210,6 +220,9 @@ class MainWindow(Window):
         self.photos_view.load_photos(self.photos)
     
     def login(self):
+        gobject.idle_add(self._login)
+
+    def _login(self):
         logged_in = MessageBox(buttons=gtk.BUTTONS_OK)
         logged_in.set_markup('Press OK once you have logged in.')
         self.fb_token = self.facebook.auth.createToken()
@@ -223,6 +236,9 @@ class MainWindow(Window):
                 log.error('Login failed')
             else:
                 log.info('Successfully logged in')
+                self.get_photo_albums()
+                self.get_friends()
+                self.start_autosave()
         else:
             log.error('Login failed')
     
@@ -245,6 +261,11 @@ class MainWindow(Window):
     
     def _set_album_cover(self, album):
         data_dir = get_config_dir('covers')
+
+        if not os.path.isdir(data_dir):
+            self.update_cover(album)
+            return
+
         for cover in os.listdir(data_dir):
             match = cover_re.match(cover)
             if not match:
@@ -342,7 +363,7 @@ class MainWindow(Window):
         except:
             return None
 
-    ## Event Handlers ##
+    ## Signal Handlers ##
     def on_tag_enter(self, widget):
         self.preview_image.display_tag(widget.text, widget.x, widget.y)
     
@@ -355,10 +376,10 @@ class MainWindow(Window):
         if not self.load(old_sessions and old_sessions[0] or None):
             create_new_session()
             self.login()
-
-        self.get_photo_albums()
-        self.get_friends()
-        self.start_autosave()
+        else:
+            self.get_photo_albums()
+            self.get_friends()
+            self.start_autosave()
     
     ## Menu Handlers
     @signal
