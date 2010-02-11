@@ -27,7 +27,7 @@ import urllib
 import gobject
 import logging
 from pkg_resources import resource_filename
-from fbuploader.common import EventThread, get_session_dir, windows_check
+from fbuploader.common import get_session_dir, windows_check
 from fbuploader.imaging import autoprepare, scale_pixbuf
 
 log = logging.getLogger(__name__)
@@ -199,81 +199,121 @@ class PhotoPreview(gtk.Viewport):
 gobject.signal_new('tag-event', PhotoPreview, gobject.SIGNAL_RUN_LAST,
                    gobject.TYPE_NONE, ((gobject.TYPE_PYOBJECT,)*3))
 
-class PhotoAdder(EventThread):
+class PhotoAdder(gobject.GObject):
     """
-    This class handles adding photos to the PhotoView. We want this to be 
-    threaded.
+    This class handles adding a photo to the PhotoView in a maner that
+    doesn't lock up the interface.
+
+    :param photos_view: The PhotoView widget to add to.
+    :type photos_view: PhotoView
     """
-    def __init__(self, photos_view, filename, load_only=False):
-        super(PhotoAdder, self).__init__()
-        self.model = photos_view.get_model()
+
+    __gtype_name__ = 'PhotoAdder'
+
+    def __init__(self, photos_view):
+        gobject.GObject.__init__(self)
+
+        # only store the methods we need from the photos_view
+        self.get_model = photos_view.get_model
         self.queue_resize = photos_view.queue_resize
-        
-        self.load_only = load_only
-        self.filename = filename
-    
-    def add(self, filename):
+
+    def add(self, filename, load_only=False):
+        """
+        Adds an image to the PhotoView.
+
+        :param filename: The path to the image to add
+        :type filename: str
+        :keyword load_only: Only load the thumbnail and don't resize
+        :type load_only: bool
+        """
         name = os.path.basename(filename)
-        return self.model.append((filename, name, loading_image))
-    
-    def resize(self, filename):
-        # Load the photo from the specified file
-        image = autoprepare(filename)
-        
-        # Save the prepared image in the session directory
-        filename = get_session_dir(os.path.basename(filename))
-        
-        if not os.path.isdir(os.path.dirname(filename)):
-            os.makedirs(os.path.dirname(filename))
-        
-        image.save(filename)
-        
-        # Fire the photo added event
-        self.fire('photo-added', filename, *image.size)
-        return filename, image.size
-    
-    def load(self, tree_iter, filename=None, size=None):
-        # Use the filename passed in if there is one
-        if filename:
-            self.model.set_value(tree_iter, 0, filename)
+
+        # Add the photo to the model so we get a TreeIter
+        tree_iter = self.get_model().append((filename, name, loading_image))
+
+        if not load_only:
+            self.resize_and_load(tree_iter, filename)
         else:
-            filename = self.model.get_value(tree_iter, 0)
-        
-        # Load the photo from the specified file or use the passed in pixbuf
+            self.load(tree_iter, filename)
+
+    def add_many(self, filenames, load_only=False):
+        """
+        Adds a group of images to the PhotoView.
+
+        :param filename: The paths of the images to add.
+        :type filename: list
+        :keyword load_only: Only load the thumbnail and don't resize
+        :type load_only: bool
+        """
+
+        iters = []
+
+        for filename in filenames:
+            name = os.path.basename(filename)
+            iters.append(self.get_model().append((filename, name, loading_image)))
+        self.queue_resize()
+
+        if not load_only:
+            map(self.resize_and_load, iters, filenames)
+        else:
+            map(self.load, iters, filenames)
+
+
+    def load(self, tree_iter, filename):
+        """
+        Loads an images thumbnail to the PhotoView.
+
+        :param tree_iter: The image to load the thumbnail for.
+        :type tree_iter: TreeIter
+
+        :param filename: The path to the image to load.
+        :type filename: str
+        """
+        gobject.idle_add(self._load, tree_iter, filename)
+
+    def _load(self, tree_iter, filename):
+        log.debug('loading thumbnail for %r', filename)
+        # Load the photo from the specified file
         thumb = gtk.gdk.pixbuf_new_from_file_at_scale(filename, 100, 100, True)
-        self.model.set_value(tree_iter, 2, thumb)
+        self.get_model().set_value(tree_iter, 2, thumb)
         self.queue_resize()
         del thumb
-    
-    def run(self):
-        tree_iter = self.add(self.filename)
-        filename = None
-        pixbuf = None
-        size = None
-        if not self.load_only:
-            filename = self.model.get_value(tree_iter, 0)
-            filename, size = self.resize(filename)
-        self.load(tree_iter, filename, size)
 
-class QueuedPhotoAdder(PhotoAdder):
-    def __init__(self, photos_view, load_only=False):
-        super(QueuedPhotoAdder, self).__init__(photos_view, None, load_only)
-        self.running = False
-        self.__queue = []
-    
-    def queue(self, *args):
-        self.__queue.extend(args)
-    
-    def run(self):
-        tree_iters = map(self.add, self.__queue)
-        for tree_iter in tree_iters:
-            filename = None
-            pixbuf = None
-            size = None
-            if not self.load_only:
-                filename = self.model.get_value(tree_iter, 0)
-                filename, size = self.resize(filename)
-            self.load(tree_iter, filename, size)
+    def resize_and_load(self, tree_iter, filename):
+        """
+        Resize a photo to the correct size and then load a thumbnail
+        for it.
+
+        :param tree_iter: The image to load the thumbnail for.
+        :type tree_iter: TreeIter
+
+        :param filename: The path to the image to resize and load.
+        :type filename: str
+        """
+        gobject.idle_add(self._resize_and_load, tree_iter, filename)
+
+    def _resize_and_load(self, tree_iter, filename):
+        # Load the photo from the specified file
+        image = autoprepare(filename)
+
+        # Save the prepared image in the session directory
+        filename = get_session_dir(os.path.basename(filename))
+        if not os.path.isdir(os.path.dirname(filename)):
+            os.makedirs(os.path.dirname(filename))
+        image.save(filename)
+
+        # Update the image location now we've resized and moved it
+        self.get_model().set_value(tree_iter, 0, filename)
+
+        # Fire the photo added event
+        self.emit('photo-added', filename, *image.size)
+
+        # Now load the image thumbnail
+        self.load(tree_iter, filename)
+
+# Add an event for when a photo has been added"tagged"
+gobject.signal_new('photo-added', PhotoAdder, gobject.SIGNAL_RUN_LAST,
+    gobject.TYPE_NONE, ((gobject.TYPE_PYOBJECT,)*3))
 
 class PhotoView(gtk.IconView):
     __gtype_name__ = 'PhotoView'
@@ -285,11 +325,13 @@ class PhotoView(gtk.IconView):
         self.set_pixbuf_column(2)
         self.set_item_width(120)
         self.photos = {}
+        self.adder = PhotoAdder(self)
+        self.adder.connect('photo-added', self.on_photo_added)
         self.connect('key-press-event', self.on_key_press_event)
     
     def add_photo(self, filename):
         log.debug('Adding photo')
-        PhotoAdder(self, filename).start()
+        self.adder.add(filename)
     
     def add_photo_by_uri(self, uri):
         if uri.startswith('file://'):
@@ -298,10 +340,7 @@ class PhotoView(gtk.IconView):
     
     def add_photos(self, filenames):
         log.debug('Adding photos')
-        queued_adder = QueuedPhotoAdder(self)
-        queued_adder.on('photo-added', self.on_photo_added)
-        queued_adder.queue(*filenames)
-        queued_adder.start()
+        self.adder.add_many(filenames)
     
     def add_photos_by_uri(self, uris):
         log.debug('Adding photos by uri')
@@ -312,13 +351,11 @@ class PhotoView(gtk.IconView):
 
     def load_photo(self, filename):
         log.debug('Loading photo')
-        PhotoAdder(self, filename, True).start()
+        self.adder.add(filename, True)
     
     def load_photos(self, filenames):
         log.debug('Loading photos')
-        queued_adder = QueuedPhotoAdder(self, True)
-        queued_adder.queue(*filenames)
-        queued_adder.start()
+        self.adder.add_many(filenames, True)
     
     def reload_photo(self, filename):
         log.debug('Reloading photo')
@@ -337,7 +374,7 @@ class PhotoView(gtk.IconView):
         self.emit('photo-deleted', filename)
         self.queue_resize()
     
-    def on_photo_added(self, filename, width, height):
+    def on_photo_added(self, adder, filename, width, height):
         self.emit('photo-added', filename, width, height)
     
     def on_key_press_event(self, iconview, event, *args):
