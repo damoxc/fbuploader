@@ -5,10 +5,9 @@
 
 CWD=`pwd`
 cd `dirname $0`
-cp __init__.py facebook.py
+cp __init__.py pyfacebook.py
 for patch in `ls *.patch`; do
-    patch facebook.py < $patch
+    patch pyfacebook.py < $patch
 done;
-rm facebook.py.orig
-mv facebook.py ../fbuploader/
+mv pyfacebook.py ../fbuploader/
 cd $CWD
