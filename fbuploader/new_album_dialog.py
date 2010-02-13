@@ -49,7 +49,7 @@ class NewAlbumDialog(Dialog):
         location = self.location.get_text() or None
         description = self.description.get_text() or None
         self.facebook.photos.createAlbum(name, location, description) \
-            .addCallback(self.on_album_created)
+            .addCallback(self.on_album_created) \
             .addErrback(self.on_album_error)
 
     def on_album_error(self, err):
