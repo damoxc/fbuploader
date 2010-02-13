@@ -173,13 +173,13 @@ class UploadDialog(Dialog):
         self.total_progressbar = self.builder.get_object('upload_total_progressbar')
         self.current = self.builder.get_object('upload_current')
         self.current_progressbar = self.builder.get_object('upload_current_progressbar')
-    
-    def run(self):
+
         aid = self.main_window.album['aid']
         facebook = self.main_window.facebook
-        
-        # Set up the photo uploader
         self.uploader = PhotoUploader(facebook, aid)
+    
+    def run(self):
+        # Set up the photo uploader
         self.uploader.connect('before-upload', self.on_before_upload)
         self.uploader.connect('upload', self.on_upload)
         self.uploader.connect('after-upload', self.on_after_upload)
