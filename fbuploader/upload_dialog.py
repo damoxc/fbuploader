@@ -81,7 +81,7 @@ class PhotoUploader(gobject.GObject):
 
     def _on_upload_error(self, err, photo, info, attempt):
         log.error('Unable to upload photo to aid: %s' % self.aid)
-        log.exception(e)
+        log.exception(err)
         # Check to see if we should retry or give up.
         if attempt >= 2:
             log.error('Failed uploading 3 times, giving up')
@@ -111,7 +111,7 @@ class PhotoUploader(gobject.GObject):
 
     def on_tag_error(self, err, pid, attempt):
         log.error('Unable to tag photo with pid: %s' % pid)
-        log.exception(e)
+        log.exception(err)
 
         # Check to see if we should retry or give up.
         if attempt >= 2:
@@ -225,7 +225,6 @@ class UploadDialog(Dialog):
         self.image.set_from_pixbuf(pixbuf)
         self.current_progressbar.set_fraction(0)
         self.dialog.queue_draw()
-        gtk.main_iteration()
     
     def on_upload(self, uploader, photo, count, chunk_size, total_size):
         progress = count / ceil(total_size / float(chunk_size))
@@ -236,7 +235,6 @@ class UploadDialog(Dialog):
         log.debug("Setting current progressbar to '%f'", round(progress, 2))
         self.current_progressbar.set_fraction(progress)
         self.dialog.queue_draw()
-        gtk.main_iteration()
         
     def on_after_upload(self, uploader, photo):
         self.complete_photos += 1
@@ -251,7 +249,6 @@ class UploadDialog(Dialog):
                                                    'data/fbuploader64.png'))
         
         self.dialog.queue_draw()
-        gtk.main_iteration()
         if self.complete_photos == self.total_photos:
             self.dialog.response(gtk.RESPONSE_OK)
     
@@ -260,13 +257,11 @@ class UploadDialog(Dialog):
         log.debug("Setting current label to '%s'", text)
         self.current.set_text(text)
         self.dialog.queue_draw()
-        gtk.main_iteration()
     
     def on_after_tag(self, uploader, photo):
         log.debug("Setting current label to ''")
         self.current.set_text('')
         self.dialog.queue_draw()
-        gtk.main_iteration()
 
     @signal
     def on_upload_dialog_delete_event(self, *args):

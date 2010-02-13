@@ -216,6 +216,7 @@ class PhotoAdder(gobject.GObject):
         # only store the methods we need from the photos_view
         self.get_model = photos_view.get_model
         self.queue_resize = photos_view.queue_resize
+        self.photos = photos_view.photos
 
     def add(self, filename, load_only=False):
         """
@@ -278,6 +279,7 @@ class PhotoAdder(gobject.GObject):
         self.get_model().set_value(tree_iter, 2, thumb)
         self.queue_resize()
         del thumb
+        self.photos[filename] = tree_iter
 
     def resize_and_load(self, tree_iter, filename):
         """
@@ -370,9 +372,13 @@ class PhotoView(gtk.IconView):
     def remove_photo(self, iter):
         filename = self.get_model().get(iter, 0)[0]
         self.get_model().remove(iter)
-        self.select_path(selection[0])
         self.emit('photo-deleted', filename)
         self.queue_resize()
+
+    def remove_photo_by_filename(self, filename):
+        if filename not in self.photos:
+            return
+        self.remove_photo(self.photos[filename])
     
     def on_photo_added(self, adder, filename, width, height):
         self.emit('photo-added', filename, width, height)

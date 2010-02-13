@@ -544,4 +544,8 @@ class MainWindow(Window):
         
         if self.upload_dialog is None:
             self.upload_dialog = UploadDialog(self)
+            self.upload_dialog.uploader.connect('after-upload', self.on_photo_uploaded)
         self.upload_dialog.run()
+
+    def on_photo_uploaded(self, uploader, photo):
+        self.photos_view.remove_photo_by_filename(photo)
