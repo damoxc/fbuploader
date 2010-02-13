@@ -75,21 +75,22 @@ class PhotoUploader(gobject.GObject):
         def cb_upload(count, chunk_size, total_size):
             self.emit('upload', photo, count, chunk_size, total_size)
             
-        try:
-            result = self.fb_upload(photo, self.aid, info.get('caption'),
-                callback=cb_upload)
-        except Exception, e:
-            log.error('Unable to upload photo to aid: %s' % self.aid)
-            log.exception(e)
+        self.fb_upload(photo, self.aid, info.get('caption'), callback=cb_upload) \
+            .addCallback(self._on_photo_uploaded, photo, info) \
+            .addErrback(self._on_upload_error, photo, info, attempt)
 
-            # Check to see if we should retry or give up.
-            if attempt >= 2:
-                log.error('Failed uploading 3 times, giving up')
-            else:
-                gobject.idle_add(self._do_upload, photo, info, attempt + 1)
+    def _on_upload_error(self, err, photo, info, attempt):
+        log.error('Unable to upload photo to aid: %s' % self.aid)
+        log.exception(e)
+        # Check to see if we should retry or give up.
+        if attempt >= 2:
+            log.error('Failed uploading 3 times, giving up')
         else:
-            pid = str(result['pid'])
-            gobject.idle_add(self._do_tagging, photo, info, pid)
+            gobject.idle_add(self._do_upload, photo, info, attempt + 1)
+
+    def _on_photo_uploaded(self, result, photo, info):
+        pid = str(result['pid'])
+        gobject.idle_add(self._do_tagging, photo, info, pid)
     
     def _do_tagging(self, photo, info, pid, attempt=0):
         tags = map(format_tag, info.get('tags', []))
@@ -104,22 +105,25 @@ class PhotoUploader(gobject.GObject):
         log.info('Tagging photo: %s', os.path.basename(photo))
         self.emit('before-tag', photo)
         log.debug('Running add_tag(%r, %r)', pid, tags)
-        try:
-            self.add_tag(self.pid, tags=tags)
-            self.emit('after-tag', photo)
-        except Exception, e:
-            log.error('Unable to tag photo with pid: %s' % pid)
-            log.exception(e)
+        self.add_tag(pid, tags=tags) \
+            .addCallback(self._on_tag_complete, photo) \
+            .addErrback(self._on_tag_error, pid, attempt)
 
-            # Check to see if we should retry or give up.
-            if attempt >= 2:
-                log.error('Failed tagging 3 times, giving up')
-            else:
-                gobject.idle_add(self._do_tagging, photo, info, pid,
-                    attempt + 1)
+    def on_tag_error(self, err, pid, attempt):
+        log.error('Unable to tag photo with pid: %s' % pid)
+        log.exception(e)
+
+        # Check to see if we should retry or give up.
+        if attempt >= 2:
+            log.error('Failed tagging 3 times, giving up')
         else:
-            self.emit('after-upload', photo)
-            gobject.idle_add(self._upload)
+            gobject.idle_add(self._do_tagging, photo, info, pid,
+                attempt + 1)
+
+    def on_tag_complete(self, res, photo):
+        self.emit('after-tag', photo)
+        self.emit('after-upload', photo)
+        gobject.idle_add(self._upload)
 
     def start_upload(self):
         """

@@ -30,12 +30,12 @@ logging.basicConfig(
 )
 
 def main():
-    import gtk
+    from twisted.internet import gtk2reactor
+    reactor = gtk2reactor.install()
+
     from fbuploader.main_window import MainWindow
     log.info('Starting Main Window')
     main_window = MainWindow()
     main_window.show()
-    try:
-        gtk.main()
-    except KeyboardInterrupt:
-        main_window.quit()
+
+    reactor.run()

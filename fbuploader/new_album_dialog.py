@@ -48,7 +48,16 @@ class NewAlbumDialog(Dialog):
         name = self.name.get_text()
         location = self.location.get_text() or None
         description = self.description.get_text() or None
-        album = self.facebook.photos.createAlbum(name, location, description)
+        self.facebook.photos.createAlbum(name, location, description) \
+            .addCallback(self.on_album_created)
+            .addErrback(self.on_album_error)
+
+    def on_album_error(self, err):
+        log.exception(err)
+        self.dialog.response(gtk.RESPONSE_NO)
+        self.dialog.hide()
+
+    def on_album_created(self, album):
         self.refresh_albums()
         self.dialog.response(gtk.RESPONSE_OK)
         self.dialog.hide()

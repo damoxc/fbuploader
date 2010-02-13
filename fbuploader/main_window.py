@@ -30,6 +30,9 @@ import gtk.gdk
 import logging
 import facebook
 
+from twisted.internet.task import LoopingCall
+from twisted.web.client import downloadPage
+
 from fbuploader import imaging
 from fbuploader.common import *
 from fbuploader.about_dialog import AboutDialog
@@ -155,24 +158,25 @@ class MainWindow(Window):
     
     def get_friends(self):
         log.info('Downloading friends')
-        gobject.idle_add(self._get_friends)
-    
-    def _get_friends(self):
-        uids = self.facebook.friends.get()
+        self.facebook.friends.get().addCallback(self.on_got_friends)
+
+    def on_got_friends(self, uids):
         uids.append(self.facebook.uid)
         
         self.friends.clear()
         log.info('Downloading friend information')
-        for friend in self.facebook.users.getInfo(uids):
+        self.facebook.users.getInfo(uids).addCallback(self.on_got_friend_info)
+    
+    def on_got_friend_info(self, friends):
+        for friend in friends:
             self.friends[friend['name']] = friend['uid']
             self.friends[friend['uid']] = friend['name']
     
     def get_photo_albums(self):
         log.info('Downloading albums')
-        gobject.idle_add(self._get_photo_albums)
+        self.facebook.photos.getAlbums().addCallback(self.on_got_photo_albums)
     
-    def _get_photo_albums(self):
-        albums = self.facebook.photos.getAlbums()
+    def on_got_photo_albums(self, albums):
         self.clear_photo_albums()
         for album in albums:
             self.albums.append(album)
@@ -220,27 +224,35 @@ class MainWindow(Window):
         self.photos_view.load_photos(self.photos)
     
     def login(self):
-        gobject.idle_add(self._login)
+        log.info('Requesting token')
+        self.facebook.auth.createToken() \
+            .addCallback(self.on_got_token) \
+            .addErrback(self.on_err_token)
 
-    def _login(self):
+    def on_err_token(self, err):
+        print err
+
+    def on_got_token(self, token):
+        self.fb_token = token
         logged_in = MessageBox(buttons=gtk.BUTTONS_OK)
         logged_in.set_markup('Press OK once you have logged in.')
-        self.fb_token = self.facebook.auth.createToken()
-        self.facebook.login()
         log.info('Logging in to Facebook')
+        self.facebook.login()
         if logged_in.run() == gtk.RESPONSE_OK:
             logged_in.destroy()
-            try:
-                self.fb_session = self.facebook.auth.getSession()
-            except Exception, e:
-                log.error('Login failed')
-            else:
-                log.info('Successfully logged in')
-                self.get_photo_albums()
-                self.get_friends()
-                self.start_autosave()
-        else:
-            log.error('Login failed')
+            self.facebook.auth.getSession() \
+                .addCallback(self.on_got_session) \
+                .addErrback(self.on_err_session)
+
+    def on_err_session(self, err):
+        log.error('Login failed')
+
+    def on_got_session(self, session):
+        log.info('Successfully logged in')
+        self.fb_session = session
+        self.get_photo_albums()
+        self.get_friends()
+        self.start_autosave()
     
     def save(self):
         session = {
@@ -315,12 +327,12 @@ class MainWindow(Window):
         self.tags_hbox.show_all()
     
     def start_autosave(self):
-        gobject.timeout_add(30000, self._autosave)
+        self.autosave = LoopingCall(self._autosave)
+        self.autosave.start(30)
     
     def _autosave(self):
         log.info('Autosaving session data')
         self.save()
-        gobject.timeout_add(30000, self._autosave)
     
     def quit(self, *args):
         log.info('Shutting down main window')
@@ -333,14 +345,14 @@ class MainWindow(Window):
         except RuntimeError: pass
     
     def update_cover(self, album):
-        gobject.idle_add(self._update_cover, album)
+        return self.facebook.photos.get(pids=album['cover_pid']) \
+            .addCallback(self.on_got_update_cover, album)
     
-    def _update_cover(self, album):
-        cover_photo = self.facebook.photos.get(pids=album['cover_pid'])
+    def on_got_update_cover(self, cover_photo, album):
         
         if not cover_photo:
             log.info('Album has no cover photo')
-            return
+            return False
         
         cover_photo = cover_photo[0]
         
@@ -350,9 +362,11 @@ class MainWindow(Window):
         
         filename = '%s{%s}.jpg' % (album['aid'], album['cover_pid'])
         log.info('Downloading album cover photo')
-        
         path = os.path.join(data_dir, filename)
-        urllib.urlretrieve(cover_photo['src'], path)
+        return downloadPage(str(cover_photo['src']), path) \
+            .addCallback(self.on_got_cover, path)
+
+    def on_got_cover(self, result, path):
         self.album_cover.set_from_file(path)
         
     ## Properties ##
