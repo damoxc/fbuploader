@@ -24,6 +24,7 @@ import os
 import re
 import gtk
 import time
+import cairo
 import urllib
 import gobject
 import gtk.gdk
@@ -88,6 +89,8 @@ class MainWindow(Window):
         get_object('photos_scrolled').add(self.photos_view)
         self.photos_view.connect('selection-changed',
             self.on_photos_view_selection_changed)
+
+        self.photos_scrolled = get_object('photos_scrolled')
         
         # Configure drag and drop for the PhotoView
         self.photos_view.drag_dest_set(gtk.DEST_DEFAULT_ALL,
@@ -180,8 +183,9 @@ class MainWindow(Window):
         self.clear_photo_albums()
         for album in albums:
             self.albums.append(album)
-            self.albums_combobox.append_text('%s (%d Photos)' % (album['name'],
-                                                                 album['size']))
+            album_text = '%s (%d Photos)' % (fbformat(album['name']),
+                album['size'])
+            self.albums_combobox.append_text(album_text)
         self.albums_combobox.set_active(0)
         self.set_sensitive(True)
         
@@ -299,6 +303,13 @@ class MainWindow(Window):
         
         # Photos stuff
         self.photos_view.set_sensitive(sensitive)
+        if sensitive:
+            ctx = self.photos_scrolled.window.cairo_create()
+            ctx.set_font_size(10)
+            ctx.select_font_face("Bitstream Vera Sans",
+                cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+            ctx.set_source_rgba(1, 1, 1, 1)
+            ctx.show_text('Testing')
         self.preview_image.set_sensitive(sensitive)
         
         # Album Form

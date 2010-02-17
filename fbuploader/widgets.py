@@ -326,10 +326,12 @@ class PhotoView(gtk.IconView):
         self.set_text_column(1)
         self.set_pixbuf_column(2)
         self.set_item_width(120)
+        self.set_size_request(400, -1)
         self.photos = {}
         self.adder = PhotoAdder(self)
         self.adder.connect('photo-added', self.on_photo_added)
         self.connect('key-press-event', self.on_key_press_event)
+        #self.connect('show', self.on_show)
     
     def add_photo(self, filename):
         log.debug('Adding photo')
@@ -390,6 +392,27 @@ class PhotoView(gtk.IconView):
         if not selection:
             return
         self.remove_photo(self.get_model().get_iter(selection[0]))
+
+    def draw_welcome_msg(self):
+        """
+        We use this method to draw the Drag photos to begin in the
+        PhotoView.
+        """
+        ctx = self.window.cairo_create()
+        allocation = self.get_allocation()
+        ctx.translate(0, 0)
+
+        msg = 'Drag photos here'
+
+        ctx.set_font_size(14)
+        ctx.select_font_face("Bitstream Vera Sans", cairo.FONT_SLANT_NORMAL,
+            cairo.FONT_WEIGHT_BOLD)
+        x1, y1, width, height, x2, y2 = ctx.text_extents(msg)
+
+        ctx.move_to(0, 0)
+        ctx.set_source_rgba(1, 1, 1, 1)
+        ctx.show_text(msg)
+        log.info('set welcome message')
 
 gobject.signal_new('photo-added', PhotoView,
     gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,

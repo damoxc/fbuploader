@@ -146,6 +146,19 @@ def property(fget=None, fset=None, fdel=None, doc=None):
     else:
         return _prop(fget, fset, fdel, doc)
 
+def fbformat(string):
+    """
+    Formats a string so it displays the same as it would
+    on Facebook.
+
+    :param string: The string to format
+    :type string: str
+    :rtype: str
+    :returns: The formatted string.
+    """
+    string = string.replace('<3', '\xe2\x99\xa5')
+    return string
+
 class Events(object):
     
     def __init__(self, *args, **kwargs):
@@ -229,7 +242,7 @@ class MessageBox(gtk.MessageDialog):
 __all__ = [
     # methods
     'signal', 'create_new_session', 'get_current_session', 'get_session_dir',
-    'set_current_session', 'get_config_dir', 'property',
+    'set_current_session', 'get_config_dir', 'property', 'fbformat',
     
     # classes
     'Dialog', 'Events', 'MessageBox', 'Window'

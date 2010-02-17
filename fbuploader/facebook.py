@@ -64,11 +64,14 @@ class CallbackProducer(object):
 
         return succeed(None)
 
+    def resumeProducing(self):
+        print 'resume'
+
     def pauseProducing(self):
-        pass
+        print 'pause'
 
     def stopProducing(self):
-        pass
+        print 'stop'
 
 class FBResponseHandler(Protocol):
 
