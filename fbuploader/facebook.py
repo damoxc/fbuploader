@@ -39,39 +39,78 @@ class CallbackProducer(object):
         self.length = len(body)
         self.chunk_size = chunk_size
         self.callback = callback
+        self.written = 0
+
+    def produce(self):
+        if len(self.body) > 0:
+            if len(self.body) < self.chunk_size:
+                data = self.body
+                self.body = ''
+            else:
+                data = self.body[0:self.chunk_size]
+                self.body = self.body[self.chunk_size:]
+
+            self.written = len(data)
+            self.count += 1
+            self.consumer.write(data)
+
+            if not self.callback:
+                return self.written
+
+            try:
+                self.callback(self.count, self.chunk_size, self.length)
+            except Exception, e:
+                log.warning('Error in callback')
+                log.exception(e)
+            return self.written
+        return 0
+    
+    def _doProducing(self):
+        while self.doProducing:
+            if self.produce() < self.chunk_size:
+                self.success.callback(None)
 
     def startProducing(self, consumer):
-        callback = self.callback
-        body = self.body
-        count = 0
+        self.count = 0
+        self.success = Deferred()
+        self.doProducing = True
+        self.consumer = consumer
+        consumer._consumer.bufferSize = self.chunk_size
+        self._doProducing()
+        return self.success
+
+    def resumeProducing(self):
+        self.doProducing = True
+        self._doProducing()
+
+    def pauseProducing(self):
+        self.doProducing = False
+
+    def stopProducing(self):
+        self.doProducing = False
+
+class SimpleProducer(object):
+    implements(IBodyProducer)
+
+    def __init__(self, body):
+        self.body = body
+        self.length = len(body)
+
+    def startProducing(self, consumer):
         try:
-            while len(body) > 0:
-                if len(body) < self.chunk_size:
-                    data = body
-                    body = ''
-                else:
-                    data = body[0:self.chunk_size]
-                    body = body[self.chunk_size:]
-
-                consumer.write(data)
-                count += 1
-                if not callback:
-                    continue
-
-                callback(count, self.chunk_size, self.length)
+            consumer.write(self.body)
         except Exception, e:
             print e
-
         return succeed(None)
 
     def resumeProducing(self):
-        print 'resume'
+        pass
 
     def pauseProducing(self):
-        print 'pause'
+        pass
 
     def stopProducing(self):
-        print 'stop'
+        pass
 
 class FBResponseHandler(Protocol):
 
@@ -201,7 +240,7 @@ class Facebook(pyfacebook.Facebook):
             args['locale'] = self.locale
 
         post_args = self._build_post_args(method, args)
-        post_data = CallbackProducer(self.unicode_urlencode(post_args))
+        post_data = SimpleProducer(self.unicode_urlencode(post_args))
 
         d = Deferred()
         if self.proxy:
