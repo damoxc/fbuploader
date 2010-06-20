@@ -42,12 +42,25 @@ class FriendsDialog(Dialog, Events):
         
         self.user_uid = user_uid
         self.__recent_friends = {}
+        
 
         # Get the required widgets as variables
         self.friend_entry = self.builder.get_object('friend_entry')
         self.all_friends = self.builder.get_object('allfriends_treeview')
         self.all_friends_expander = self.builder.get_object('allfriends_expander')
         self.recent_friends = self.builder.get_object('recentfriends_treeview')
+
+        completion = gtk.EntryCompletion()
+        self.friend_entry.set_completion(completion)
+        self.friends_store = gtk.ListStore(int, str)
+        completion.set_model(self.friends_store)
+        completion.set_text_column(1)
+        completion.set_inline_completion(True)
+        completion.set_popup_completion(False)
+
+        for friend in self.friend_names:
+            uid = self.friends[friend]
+            self.friends_store.append((uid, friend))
 
         # Set up the friends treeviews
         for treeview in (self.all_friends, self.recent_friends):
@@ -133,14 +146,7 @@ class FriendsDialog(Dialog, Events):
     def on_friend_entry_changed(self, *args):
         if not self.all_friends_expander.get_expanded():
             self.all_friends_expander.set_expanded(True)
-        
-        if self.filter_friends(self.friend_entry.get_text()) == 1:
-            pos = self.friend_entry.get_position() + 1
-            name = self.all_friends.get_model()[0][1]
-            self.friend_entry.insert_text(name[pos:], pos)
-            #self.friend_entry.set_text()
-            selection = self.all_friends.get_selection()
-            selection.select_path((0,))
+        self.filter_friends(self.friend_entry.get_text())
     
     @signal
     def on_allfriends_treeview_row_activated(self, allfriends, path, column):
