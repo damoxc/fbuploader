@@ -31,6 +31,7 @@ import gtk.gdk
 import logging
 import facebook
 
+from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from twisted.web.client import downloadPage
 
@@ -352,8 +353,9 @@ class MainWindow(Window):
         if self.friends_chooser is not None:
             self.friends_chooser.dialog.hide()
         try:
-            gtk.main_quit()
-        except RuntimeError: pass
+            reactor.stop()
+        except RuntimeError:
+            pass
     
     def update_cover(self, album):
         return self.facebook.photos.get(pids=album['cover_pid']) \
