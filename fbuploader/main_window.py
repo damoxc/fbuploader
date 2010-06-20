@@ -32,6 +32,7 @@ import logging
 import facebook
 
 from twisted.internet import reactor
+from twisted.internet.error import ReactorNotRunning
 from twisted.internet.task import LoopingCall
 from twisted.web.client import downloadPage
 
@@ -354,7 +355,7 @@ class MainWindow(Window):
             self.friends_chooser.dialog.hide()
         try:
             reactor.stop()
-        except RuntimeError:
+        except ReactorNotRunning:
             pass
     
     def update_cover(self, album):
