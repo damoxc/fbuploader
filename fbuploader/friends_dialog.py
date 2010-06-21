@@ -87,6 +87,8 @@ class FriendsDialog(Dialog, Events):
             if filter_text.lower() in friend.lower():
                 model.append((uid, friend))
                 count += 1
+        if count == 1:
+            self.all_friends.get_selection().select_path((0,))
         return count
     
     def add_recent_friend(self, name, uid=-1):
