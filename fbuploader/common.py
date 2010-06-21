@@ -240,6 +240,9 @@ class MessageBox(gtk.MessageDialog):
                                                   'data/fbuploader64.png'))
 
 __all__ = [
+    #modules
+    'json',
+
     # methods
     'signal', 'create_new_session', 'get_current_session', 'get_session_dir',
     'set_current_session', 'get_config_dir', 'property', 'fbformat',

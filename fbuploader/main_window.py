@@ -271,8 +271,9 @@ class MainWindow(Window):
             if not os.path.isdir(os.path.dirname(path)):
                 os.makedirs(os.path.dirname(path))
             json.dump(session, open(path, 'wb'))
-        except:
+        except Exception, e:
             log.error('Unable to save session info')
+            log.exception(e)
         
     def set_album_cover(self, album):
         gobject.idle_add(self._set_album_cover, album)
