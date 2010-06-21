@@ -25,8 +25,6 @@
             <property name="can_focus">True</property>
             <property name="invisible_char">&#x25CF;</property>
             <signal name="changed" handler="on_friend_entry_changed"/>
-            <signal name="delete_text" handler="on_friend_entry_delete_text"/>
-            <signal name="insert_text" handler="on_friend_entry_insert_text"/>
           </object>
           <packing>
             <property name="expand">False</property>
