@@ -113,7 +113,7 @@ class FriendsDialog(Dialog, Events):
         # response.
         self.dialog.hide()
         return response
-    
+
     @signal
     def on_friends_ok_button_clicked(self, *args):
         selection = self.recent_friends.get_selection()
@@ -134,9 +134,10 @@ class FriendsDialog(Dialog, Events):
                 if selection.count_selected_rows() == 0:
                     return True
                 model, tree_iter = selection.get_selected()
-                self.uid = model.get(tree_iter, 0)
+                self.uid = model.get_value(tree_iter, 0)
                 self.add_recent_friend(self.name, self.uid)
                 self.dialog.response(gtk.RESPONSE_OK)
+    on_friend_entry_activate = on_friends_ok_button_clicked
     
     @signal
     def on_friends_cancel_button_clicked(self, *args):
