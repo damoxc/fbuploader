@@ -105,11 +105,11 @@ class PhotoUploader(gobject.GObject):
         log.info('Tagging photo: %s', os.path.basename(photo))
         self.emit('before-tag', photo)
         log.debug('Running add_tag(%r, %r)', pid, tags)
-        self.add_tag(pid, tags=tags) \
+        self.fb_add_tag(pid, tags=tags) \
             .addCallback(self._on_tag_complete, photo) \
             .addErrback(self._on_tag_error, pid, attempt)
 
-    def on_tag_error(self, err, pid, attempt):
+    def _on_tag_error(self, err, pid, attempt):
         log.error('Unable to tag photo with pid: %s' % pid)
         log.exception(err)
 
@@ -120,7 +120,7 @@ class PhotoUploader(gobject.GObject):
             gobject.idle_add(self._do_tagging, photo, info, pid,
                 attempt + 1)
 
-    def on_tag_complete(self, res, photo):
+    def _on_tag_complete(self, res, photo):
         self.emit('after-tag', photo)
         self.emit('after-upload', photo)
         gobject.idle_add(self._upload)
