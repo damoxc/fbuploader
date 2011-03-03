@@ -328,6 +328,10 @@ class MainWindow(Window):
         for tag in tags:
             tag, x, y = tag
             if type(tag) is int:
+                if tag not in self.friends:
+                    log.warning('Tagged person (%r) is not a friend', tag)
+                    continue
+
                 label = self.friends[tag]
                 uid = tag
             else:
@@ -539,13 +543,12 @@ class MainWindow(Window):
             value = self.friends_chooser.name
         else:
             value = self.friends_chooser.uid
+        log.debug('tagged: %r', value)
         
-        info = self.photo_info.get(self.preview_image.filename, {})
-        tags = info.get('tags', [])
+        info = self.photo_info.setdefault(self.preview_image.filename, {})
+        tags = info.setdefault('tags', [])
         tags.append((value, x, y))
-        info['tags'] = tags
         self.set_tags(tags)
-        self.photo_info[self.preview_image.filename] = info
         self.preview_image.clear_tag()
     
     @signal
