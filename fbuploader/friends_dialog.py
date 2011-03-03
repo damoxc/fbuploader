@@ -21,9 +21,12 @@
 #
 
 import gtk
+import logging
 
 from pkg_resources import resource_filename
 from fbuploader.common import Dialog, Events, signal
+
+log = logging.getLogger(__name__)
 
 class FriendsDialog(Dialog, Events):
     
@@ -52,19 +55,18 @@ class FriendsDialog(Dialog, Events):
 
         completion = gtk.EntryCompletion()
         self.friend_entry.set_completion(completion)
-        self.friends_store = gtk.ListStore(int, str)
+        self.friends_store = gtk.ListStore(long, str)
         completion.set_model(self.friends_store)
         completion.set_text_column(1)
         completion.set_inline_completion(True)
         completion.set_popup_completion(False)
 
         for friend in self.friend_names:
-            uid = self.friends[friend]
-            self.friends_store.append((uid, friend))
+            self.friends_store.append((self.friends[friend], friend))
 
         # Set up the friends treeviews
         for treeview in (self.all_friends, self.recent_friends):
-            treeview.set_model(gtk.ListStore(int, str))
+            treeview.set_model(gtk.ListStore(long, str))
             renderer = gtk.CellRendererText()
             column = gtk.TreeViewColumn('Friends', renderer)
             column.add_attribute(renderer, 'text', 1)
