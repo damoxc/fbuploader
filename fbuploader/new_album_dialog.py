@@ -38,7 +38,7 @@ class NewAlbumDialog(Dialog):
         self.description = self.builder.get_object('album_description_entry')
         del self.builder
         self.facebook = main_window.facebook
-        self.refresh_albums = main_window.refresh_photo_albums
+        self.refresh_albums = main_window.get_photo_albums
     
     def on_delete(self, *args):
         return super(NewAlbumDialog, self).on_delete(*args)

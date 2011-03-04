@@ -423,7 +423,7 @@ class MainWindow(Window):
     
     @signal
     def on_refreshalbums_menuitem_activate(self, *args):
-        self.refresh_photo_albums()
+        self.get_photo_albums()
     
     @signal
     def on_about_menuitem_activate(self, e):
