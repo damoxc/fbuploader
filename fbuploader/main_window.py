@@ -170,18 +170,28 @@ class MainWindow(Window):
         
         self.friends.clear()
         log.info('Downloading friend information')
-        self.facebook.users.getInfo(uids).addCallback(self.on_got_friend_info)
+        self.facebook.users.getInfo(uids
+            ).addCallback(self.on_got_friend_info
+            ).addErrback(self.err_got_friend_info)
     
     def on_got_friend_info(self, friends):
+        log.info('Downloaded friend information successfully')
         for friend in friends:
             self.friends[friend['name']] = friend['uid']
             self.friends[friend['uid']] = friend['name']
+
+    def err_got_friend_info(self, error):
+        log.error('Failed downloading friend information')
+        log.exception(error.value)
     
     def get_photo_albums(self):
         log.info('Downloading albums')
-        self.facebook.photos.getAlbums().addCallback(self.on_got_photo_albums)
+        self.facebook.photos.getAlbums(
+            ).addCallback(self.on_got_photo_albums
+            ).addErrback(self.err_got_photo_albums)
     
     def on_got_photo_albums(self, albums):
+        log.info('Downloaded albums successfully')
         self.clear_photo_albums()
         for album in albums:
             self.albums.append(album)
@@ -190,6 +200,10 @@ class MainWindow(Window):
             self.albums_combobox.append_text(album_text)
         self.albums_combobox.set_active(0)
         self.set_sensitive(True)
+
+    def err_got_photo_albums(self, error):
+        log.error('Failed downloading photo albums')
+        log.exception(error.value)
         
     def get_signals(self):
         signals = super(MainWindow, self).get_signals()
